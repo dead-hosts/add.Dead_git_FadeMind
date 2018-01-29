@@ -1,7 +1,6 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1515641717": [
-            "apple-updates.com",
+        "1517240900": [
             "disney-movie.org",
             "malwaredomainlists.com",
             "www.apple-updates.com",
@@ -11,6 +10,9 @@
             "www.thesunonsunday.co.uk",
             "www.thesunonsunday.com",
             "www.wwwfacebook.com"
+        ],
+        "to_test": [
+            "apple-updates.com"
         ]
     }
 }
