@@ -318,6 +318,7 @@ class Install(object):
                 'auto_continue': 'True',
                 'command_before_end': "''",
                 'custom_ip': "'0.0.0.0'",
+                'days_between_db_retest': '1',
                 'debug': 'False',
                 'domain': "''",
                 'generate_hosts': 'True',
@@ -367,6 +368,7 @@ class Install(object):
                 'auto_continue',
                 'command_before_end',
                 'custom_ip',
+                'days_between_db_retest',
                 'debug',
                 'domain',
                 'generate_hosts',
@@ -754,13 +756,43 @@ class IANA(object):
             'athleta': 'whois.nic.athleta',
             'audible': 'whois.nic.audible',
             'author': 'whois.nic.author',
+            'aws': 'whois.nic.aws',
+            'axa': 'whois.nic.axa',
+            'azure': 'whois.nic.azure',
+            'baby': 'whois.nic.baby',
+            'banamex': 'whois.nic.banamex',
+            'bananarepublic': 'whois.nic.bananarepublic',
+            'baseball': 'whois.nic.baseball',
+            'bharti': 'whois.nic.bharti',
+            'bing': 'whois.nic.bing',
+            'bloomberg': 'whois.nic.bloomberg',
             'bm': 'whois.afilias-srs.net',
+            'book': 'whois.nic.book',
+            'booking': 'whois.nic.booking',
+            'bot': 'whois.nic.bot',
             'bz': 'whois.afilias-grs.net',
             'buzz': 'whois.nic.buzz',
+            'call': 'whois.nic.call',
+            'calvinklein': 'whois.nic.calvinklein',
+            'caravan': 'whois.nic.caravan',
+            'cartier': 'whois.nic.cartier',
+            'cbn': 'whois.nic.cbn',
+            'cbre': 'whois.nic.cbre',
             'cd': 'chois.nic.cd',
+            'chase': 'whois.nic.chase',
+            'circle': 'whois.nic.circle',
+            'cisco': 'whois.nic.cisco',
+            'citadel': 'whois.nic.citadel',
+            'citi': 'whois.nic.citi',
+            'citic': 'whois.nic.citic',
             'cm': 'whois.netcom.cm',
+            'coupon': 'whois.nic.coupon',
+            'crown': 'whois.nic.crown',
+            'crs': 'whois.nic.crs',
             'fj': 'whois.usp.ac.fj',
             'ga': 'whois.my.ga',
+            'gh': 'whois.nic.gh',
+            'kw': 'whois.nic.kw',
             'lc': 'whois2.afilias-grs.net',
             'lk': 'whois.nic.lk',
             'nyc': 'whois.nic.nyc',
@@ -1105,6 +1137,13 @@ if __name__ == '__main__':
         help='Replace the default results (final) commit message.'
     )
     PARSER.add_argument(
+        '-dbr',
+        '--days-between-db-retest',
+        type=int,
+        help="Set the numbers of day(s) between each retest of domains present \
+        into inactive-db.json"
+    )
+    PARSER.add_argument(
         '-del',
         '--delete',
         action='store_true',
@@ -1172,7 +1211,7 @@ if __name__ == '__main__':
         '-v',
         '--version',
         action='version',
-        version='%(prog)s 0.9.1-beta'
+        version='%(prog)s 0.10.0-beta'
     )
 
     ARGS = PARSER.parse_args()
@@ -1190,6 +1229,9 @@ if __name__ == '__main__':
     if ARGS.commit_results_message:
         DATA['to_install']['travis_autosave_final_commit'] = '"' + \
             ARGS.commit_results_message + '"'
+
+    if ARGS.days_between_db_retest:
+        DATA['to_install']['days_between_db_retest'] = ARGS.days_between_db_retest
 
     if ARGS.timeout:
         DATA['to_install']['seconds_before_http_timeout'] = ARGS.timeout
