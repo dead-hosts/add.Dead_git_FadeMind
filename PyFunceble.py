@@ -2,456 +2,160 @@
 # -*- coding: utf-8 -*-
 
 """
-PyFunceble is the litle sister of Funceble (https://github.com/funilrys/PyFunceble).
-Consider PyFunceble as a tool to check the status of a given domain name
-or IP.
+The tool to check domains or IP availability.
+
+
+██████╗ ██╗   ██╗███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗██████╗ ██╗     ███████╗
+██╔══██╗╚██╗ ██╔╝██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝██╔══██╗██║     ██╔════╝
+██████╔╝ ╚████╔╝ █████╗  ██║   ██║██╔██╗ ██║██║     █████╗  ██████╔╝██║     █████╗
+██╔═══╝   ╚██╔╝  ██╔══╝  ██║   ██║██║╚██╗██║██║     ██╔══╝  ██╔══██╗██║     ██╔══╝
+██║        ██║   ██║     ╚██████╔╝██║ ╚████║╚██████╗███████╗██████╔╝███████╗███████╗
+╚═╝        ╚═╝   ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝╚═════╝ ╚══════╝╚══════╝
+
+PyFunceble is the little sister of Funceble (https://github.com/funilrys/funceble)
+which was archived on March 13th, 2018.
+At the end of 2017, PyFunceble was described by one of its most active user as:
+"[an] excellent script for checking ACTIVE and INACTIVE domain names."
+
+Our main objective is to test domains and IP availability
+by generating an accurate result based on results from WHOIS, NSLOOKUP and
+HTTP status codes.
+As result, PyFunceble returns 3 status: ACTIVE, INACTIVE and INVALID.
+The denomination of those statuses can be changed under your personal
+`config.yaml`.
+
+At the time we write this, PyFunceble is running actively and daily under 50+
+Travis CI repository or process to test the availability of domains which are
+present into hosts files, AdBlock filter lists, list of IP, list of domains or
+blocklists.
+
+An up to date explanation of all status can be found at https://git.io/vxieo.
+You can also find a simple representation of the logic behind PyFunceble at
+https://git.io/vxifw.
+
+Author:
+    Nissar Chababy, @funilrys, contactTATAfunilrysTODTODcom
+
+Special thanks to:
+    Adam Warner - @PromoFaux
+    Mitchell Krog - @mitchellkrogza
+    Pi-Hole - @pi-hole
+    SMed79 - @SMed79
+
+Contributors:
+    Let's contribute to PyFunceble!!
+
+    Mitchell Krog - @mitchellkrogza
+    Odyseus - @Odyseus
+    WaLLy3K - @WaLLy3K
+    xxcriticxx - @xxcriticxx
+
+    The complete list can be found at https://git.io/vND4m
+
+Original project link:
+    https://github.com/funilrys/PyFunceble
+
+Original project wiki:
+    https://github.com/funilrys/PyFunceble/wiki
+
+License: MIT
+    MIT License
+
+    Copyright (c) 2017-2018 Nissar Chababy
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 """
 
-#  _______           _______           _        _______  _______  ______
-# (  ____ )|\     /|(  ____ \|\     /|( (    /|(  ____ \(  ____ \(  ___ \ ( \      (  ____ \
-# | (    )|( \   / )| (    \/| )   ( ||  \  ( || (    \/| (    \/| (   ) )| (      | (    \/
-# | (____)| \ (_) / | (__    | |   | ||   \ | || |      | (__    | (__/ / | |      | (__
-# |  _____)  \   /  |  __)   | |   | || (\ \) || |      |  __)   |  __ (  | |      |  __)
-# | (         ) (   | (      | |   | || | \   || |      | (      | (  \ \ | |      | (
-# | )         | |   | )      | (___) || )  \  || (____/\| (____/\| )___) )| (____/\| (____/\
-# |/          \_/   |/       (_______)|/    )_)(_______/(_______/|/ \___/ (_______/(_______/
-
-# Written by: @Funilrys, Nissar Chababy <contact at funilrys dot com>
-# GitHub : https://github.com/funilrys/PyFunceble
-
-################################ Contributors ################################
-# - All contributors of https://github.com/funilrys/Funceble
-#
-# - Let's contribute to PyFunceble !
-##########################################################################
 # pylint: disable=too-many-lines,invalid-name
 import argparse
+import hashlib
 import socket
 from collections import OrderedDict
+from inspect import getsourcefile
+from itertools import repeat
 from json import decoder, dump, loads
+from os import chmod, environ, mkdir, path, remove, rename
 from os import sep as directory_separator
-from os import environ, getcwd, path, remove
+from os import stat, walk
 from re import compile as comp
-from re import sub as substrings
 from re import escape
+from re import sub as substrings
+from stat import S_IEXEC
 from subprocess import PIPE, Popen
-from sys import stdout, version_info
 from time import strftime
 
 import requests
-from colorama import init as initiate
 from colorama import Back, Fore, Style
-
-
-class Settings(object):  # pylint: disable=too-few-public-methods
-    """
-    Serve as "saver" of all needed settings or parameters.
-    """
-
-    ################################# Status #################################
-    # Default index for "official" returned status.
-    # Why 5 ? Simply luck I started to write the status and it's appears that the
-    # fifth index is simply what we used in Funceble.
-    official_status_index = 5
-    # List of valid down status.
-    down_status = ['down', 'Down', 'DOWN', 'inactive',
-                   'Inactive', 'INACTIVE', 'error', 'Error', 'ERROR']
-    # Official down status.
-    official_down_status = down_status[official_status_index]
-    # List of valid up status.
-    up_status = [
-        'up',
-        'Up',
-        'UP',
-        'active',
-        'Active',
-        'ACTIVE',
-        'valid',
-        'Valid',
-        'VALID']
-    # Official up status.
-    official_up_status = up_status[official_status_index]
-    # List of valid invalid status.
-    invalid_status = ['ouch', 'Ouch', 'OUCH', 'invalid', 'Invalid', 'INVALID']
-    # Official invalid status.
-    official_invalid_status = invalid_status[official_status_index]
-    # Generic status.
-    # Why generic ? Good question that the first word who come to discribed the
-    # unified table system.
-    generic_status = ['generic', 'Generic', 'GENERIC']
-    # Potentionally up status
-    # Why potentially ? Please note: https://git.io/vFttS
-    # I consider them as potentially because for example we can't be sure that
-    # a 403 HTTP status code represent an 'INACTIVE' domain.
-    potentialy_up_status = ['potentially_up', 'potentially_active']
-    # Potentially down status
-    # As an example, We can't be sure that a 400 HTTP status code result
-    # represent an 'INACTIVE' domain.
-    potentially_down_status = ['potentially_down', 'potentially_inactive']
-    # Active status
-    # As exemple, we are sure that a 200 HTTP status code represent an
-    # 'ACTIVE' domain.
-    http_active_status = [
-        'http_active',
-        'HTTP_ACTIVE',
-        'HTTP_active',
-        'HTTP_Active']
-    ##########################################################################
-    ################################ Defaults ################################
-    # Activation/Deactivation of the adblock format decoding.
-    adblock = False
-    # Activation/Deactivation of the autocontinue system.
-    auto_continue = True
-    # We use are going to use this variable is order to pass some command before
-    # the final commit in case auto_continue = True.
-    command_before_end = ''
-    # Set the custom IP in case we need to generate hosts files according to our
-    # results.
-    custom_ip = '0.0.0.0'
-    # This variable set the number of the day between inactive-db retest
-    days_between_db_retest = 1
-    # Generate debug file if logs are activated.
-    debug = False
-    # This will save the domain that is currently under test.
-    domain = ''
-    # Activate/Deactivate the generation of hosts file.
-    generate_hosts = True
-    # Used to check if the header has been already printed on screen.
-    header_printed = False
-    # IANA iana_database
-    iana_db = {}
-    # Activate/Deactivate the usage of a database to save the inactive domains
-    inactive_database = True
-    # This variable will sabe the database for easy usage under the script.
-    inactive_db = {}
-    # Activate/Deactive the output of every informations.
-    less = False
-    # Activate/Deactivate the output of logs.
-    logs = True
-    # Activate/Deactivate the usage of WHOIS.
-    no_whois = False
-    # Activate/Deactivate the generation of plain list of domains accoding to
-    # out status.
-    plain_list_domain = False
-    # Activate/Deactive the quiet mode.
-    quiet = False
-    # The following will save the referer.
-    referer = ''
-    # HTTP Status code timeout.
-    # Consider this as the minimum time in seconds that we need before.
-    seconds_before_http_timeout = 3
-    # This allow us to share logs which are used to write PyFunceble updates.
-    share_logs = False
-    # Show/hide execution time.
-    show_execution_time = False
-    # Show/hide the percentage.
-    show_percentage = True
-    # Activate/Deactivate the simple output mode.
-    simple = False
-    # If set to true, we generate the files into the 'splited/' directory.
-    split_files = False
-    # Domain to filter. For example \.blogspot\. will test only blogspot.*
-    # domains.
-    to_filter = ''
-    # Activation/Deactivation of Travis CI autosave system.
-    travis = False
-    # This tell us in which branch we have to push
-    travis_branch = 'master'
-    # Minimum of minutes before we start commiting to upstream under Travis CI.
-    travis_autosave_minutes = 10
-    # Default travis final commit message
-    travis_autosave_final_commit = "[Results] Test of add.Dead"
-    # Default travis commit message
-    travis_autosave_commit = "[Autosave] Test of add.Dead"
-    # Output into unified files.
-    unified_file = True
-    ##########################################################################
-    ############################ Links / Servers #############################
-    # Link of the repository.
-    link_to_repo = 'https://github.com/funilrys/PyFunceble'
-    # IANA whois Servers.
-    iana_server = 'whois.iana.org'
-    # Link to the api where we share logs.
-    link_api_date_format = 'http://pyfunceble.funilrys.com/api/date-format'
-    link_api_no_referer = 'http://pyfunceble.funilrys.com/api/no-referer'
-    ##########################################################################
-    ################################## Time ##################################
-    # Current date & Time.
-    current_datetime = strftime("%a %d %b %H:%m:%S %Z %Y")
-    ##########################################################################
-    ################################# Counter ################################
-    # Counter of the number of tested.
-    number_of_tested = 0
-    # Counter of the number of active/up.
-    number_of_up = 0
-    # Counter of the number of inactive/down.
-    number_of_down = 0
-    # Counter of the number of invalid.
-    number_of_invalid = 0
-    # Percentage of active/up.
-    percentage_of_up = 0
-    # Percentage of inactive/down.
-    percentage_of_down = 0
-    # Percentage of invalid.
-    percentage_of_invalid = 0
-    ##########################################################################
-    ################################ HTTP Code ###############################
-    # Activate/Deactivate the used of the http code.
-    http_code_status = True
-    # The following will get the http code
-    http_code = ''
-    # Active considered codes.
-    # Note that if nslookup = inactive and http code is in the following list,
-    # We set the domain to active.
-    active_http_codes = [100, 101, 200, 201, 202, 203, 204, 205, 206]
-    # Potentially active codes.
-    potentially_up_codes = [
-        000,
-        300,
-        301,
-        302,
-        303,
-        304,
-        305,
-        307,
-        403,
-        405,
-        406,
-        407,
-        408,
-        411,
-        413,
-        417,
-        500,
-        501,
-        502,
-        503,
-        504,
-        505]
-    # Potentially inactive codes.
-    down_potentially_codes = [400, 402, 403, 404, 409, 410, 412, 414, 415, 416]
-    ##########################################################################
-    ########################### File Manipulation ############################
-    # Used to check if we already cleaned the given file.
-    cleaned_done = False
-    # If set to True, we don't generate any files.
-    # Please note: This does not apply to hosts files.
-    no_files = False
-    ##########################################################################
-    ################################# Outputs ################################
-    # Note: DO NOT FORGET `/` AT THE END.
-
-    # Current directory.
-    current_dir = '/home/travis/build/dead-hosts/add.Dead_git_FadeMind/'
-    # Current directory separator
-    dir_separator = directory_separator
-    # Output directory.
-    # DO NOT UPDATE THIS UNLESS YOU KNOW WHAT YOU ARE DOING.
-    output_dir = current_dir + 'output' + dir_separator
-    # Autocontinue log file.
-    # Please note that this file is != from Funceble.
-    autocontinue_log_file = output_dir + 'continue.json'
-    # Output of unified results.
-    # Please note that this the default output unless Settings.split_files is
-    # activated.
-    output_unified_results = output_dir + 'results.txt'
-    # Inactive database path.
-    inactive_db_path = current_dir + 'inactive-db.json'
-    ##########################################################################
-    #                               `output/domains/`
-    # This directory will keep the plain list of domain to their
-    # official status.
-    ##########################################################################
-    # Domains directory.
-    domains_dir = output_dir + 'domains' + dir_separator
-    # Default filename.
-    domains_default_filename = 'list'
-    # ACTIVE/Up domains directory.
-    up_domains_dir = domains_dir + official_up_status + dir_separator
-    # INACTIVE/Down domains directory.
-    down_domains_dir = domains_dir + official_down_status + dir_separator
-    # INVALID domains directory.
-    invalid_domains_dir = domains_dir + official_invalid_status + dir_separator
-    # Output of ACTIVE/Up domains.
-    output_up_domain = up_domains_dir + domains_default_filename
-    # Output of INACTIVE/Down domains.
-    output_down_domain = down_domains_dir + domains_default_filename
-    # Output of INVALID domains.
-    output_invalid_domain = invalid_domains_dir + domains_default_filename
-
-    ##########################################################################
-    #                               `output/hosts/`
-    # This directory will keep the generated hosts files according to their
-    # official status.
-    ##########################################################################
-    # hosts directory.
-    hosts_dir = output_dir + 'hosts' + dir_separator
-    # Default filename.
-    hosts_default_filename = 'hosts'
-    # ACTIVE/Up hosts directory.
-    up_hosts_dir = hosts_dir + official_up_status + dir_separator
-    # INACTIVE/Down hosts directory.
-    down_hosts_dir = hosts_dir + official_down_status + dir_separator
-    # INVALID hosts directory.
-    invalid_hosts_dir = hosts_dir + official_invalid_status + dir_separator
-    # Output of ACTIVE/Up hosts.
-    output_up_host = up_hosts_dir + hosts_default_filename
-    # Output of INACTIVE/Down hosts.
-    output_down_host = down_hosts_dir + hosts_default_filename
-    # Output of INVALID hosts.
-    output_invalid_host = invalid_hosts_dir + hosts_default_filename
-
-    ##########################################################################
-    #                               `output/logs/`
-    # This directory will keep all generated logs of the current session
-    # if Settings.logs is activated.
-    ##########################################################################
-    # logs directory.
-    logs_dir = output_dir + 'logs' + dir_separator
-    # WHOIS logs output.
-    # Please note that this directory will keep the whois records according to
-    # WHOIS server only if Settings.debug is activated.
-    whois_logs_dir = logs_dir + 'whois' + dir_separator
-    # Wrong date format logs output.
-    # Please note thet this directory will keep a record of all wrong formated
-    # date.
-    date_format_logs_dir = logs_dir + 'date_format' + dir_separator
-    # Percentages logs.
-    # Please note that this directory will keep the percentage of the current
-    # session.
-    percentage_logs_dir = logs_dir + 'percentage' + dir_separator
-    # Output of percentae logs.
-    output_percentage_log = percentage_logs_dir + 'percentage.txt'
-    # Execution time logs.
-    # Please note that this file is generated when Settings.show_execution_time
-    # is activated.
-    execution_time_logs = logs_dir + 'execution.log'
-    # No referer logs.
-    # Please note that this directory will keep a record of all domains
-    # extensions which don't have any known referer.
-    no_referer_logs_dir = logs_dir + 'no_referer' + dir_separator
-
-    ##########################################################################
-    #                               `output/splited/`
-    # This directory will keep all the results of execution according to
-    # the different matched status.
-    # Please note that this only works if Settings.split_files is activated.
-    ##########################################################################
-    # Splited directory.
-    output_splited_results = output_dir + 'splited' + dir_separator
-    # Output of ACTIVE/Up results.
-    output_up_result = output_splited_results + official_up_status
-    # Output of INACTIVE/Down results.
-    output_down_result = output_splited_results + official_down_status
-    # Output of INVALID results.
-    output_invalid_result = output_splited_results + official_invalid_status
-
-    ##########################################################################
-    #                               `output/HTTP_Analytic/`
-    # This directory will keep all the results of the HTTP status code
-    # analyze.
-    # Please note that this only works if Settings.http_code_status
-    # is activated.
-    ##########################################################################
-    # HTTP analytic directory.
-    output_http_analytic = output_dir + 'HTTP_Analytic' + dir_separator
-    # Active HTTP codes directory.
-    http_up = output_http_analytic + official_up_status + dir_separator
-    # Output of Active codes.
-    # Please note that a domain is set into the following file only if
-    # the official status is not normally `ACTIVE`.
-    # Please also note that the domains listed here are automatically set
-    # into all ACTIVE results files.
-    output_http_up = http_up + official_up_status
-    # Potentially active codes directory.
-    http_potentially_up = output_http_analytic + 'POTENTIALLY_ACTIVE' + dir_separator
-    # Output of potentially active codes.
-    output_http_potentially_up = http_potentially_up + 'potentially_active'
-    # Potentially inactive codes directory.
-    http_potentially_down = output_http_analytic + \
-        'POTENTIALLY_INACTIVE' + dir_separator
-    # Output of potentially inactive codes.
-    output_http_potentially_down = http_potentially_down + 'inactive_or_potentially'
-
-    @classmethod
-    def switch(cls, variable):  # pylint: disable=inconsistent-return-statements
-        """
-        Switch class variables to their opposite.
-
-        :param variable: A string, the Settings.variable_name to switch.
-        """
-
-        links = {
-            'adblock': 'Unknown',
-            'auto_continue': 'https://git.io/v7xma',
-            'debug': 'https://git.io/v7xmD',
-            'show_execution_time': 'Unknown',
-            'generate_hosts': 'Unknown',
-            'http_code_status': 'https://git.io/v5vHm',
-            'inactive_database': 'Unknown',
-            'no_files': 'Unknown',
-            'logs': 'Unknown',
-            'unified_file': 'Unknown',
-            'no_whois': 'Unknown',
-            'percentage': 'https://git.io/v7xtP',
-            'plain_list_domain': 'Unknown',
-            'quiet': 'Unknown',
-            'share_logs': 'Unknown',
-            'simple': 'Unknown',
-            'split_files': 'Unknown',
-            'travis': 'Unknown'
-        }
-
-        current_state = getattr(Settings, variable)
-
-        if current_state in [True, False]:
-            if current_state is True:
-                return False
-            return True
-
-        to_print = 'Your configuration is not valid.\n'
-        to_print += 'Please use the auto update or post an issue to %s'
-
-        print(to_print % links[variable])
-        exit(1)
+from colorama import init as initiate
+from yaml import load as load_yaml
 
 
 class PyFunceble(object):
     """
-    Main entry to Funceble. Brain of the program. Also known as "put everything
+    Main entry to PYFunceble. Brain of the program. Also known as "put everything
     together to make the system works".
 
-    :param domain: A string, a domain or IP to test.
-    :param file_path: A string, a path to a file to read.
+    Arguments:
+        - domain: str
+            A domain or IP to test.
+        - file_path: str
+            A path to a file to read.
     """
 
     def __init__(self, domain=None, file_path=None):
         if __name__ == '__main__':
-            if Settings.travis:
+
+            CONFIGURATION['file_to_test'] = file_path
+
+            if CONFIGURATION['travis']:
                 AutoSave().travis_permissions()
 
             self.bypass()
             ExecutionTime('start')
 
-            if domain is not None and domain != '':
-                Settings.domain = domain.lower()
+            if domain:
+                CONFIGURATION['domain'] = domain.lower()
                 self.domain()
-            elif file_path is not None and file_path != '':
-                self.file(file_path)
+            elif file_path:
+                self.file()
 
             ExecutionTime('stop')
             Percentage().log()
+
+            if domain:
+                self.colored_logo()
         else:
-            Settings.current_dir = getcwd() + Settings.dir_separator
-            Settings.simple = Settings.quiet = Settings.no_files = True
-            if domain is not None and domain != '':
-                Settings.domain = domain.lower()
+            CONFIGURATION['simple'] = CONFIGURATION['quiet'] = CONFIGURATION['no_files'] = True
+            if domain:
+                CONFIGURATION['domain'] = domain.lower()
 
     @classmethod
     def test(cls):
         """
         This method avoid confusion between self.domain which is called into
-            __main__ and test() which should be called out of PyFunceble's scope.
+        __main__ and test() which should be called out of PyFunceble's scope.
+
+        Returns: str
+            ACTIVE, INACTIVE or INVALID.
+
+        Raise:
+            - Exception: when this method is called under __name___
         """
 
         if __name__ == '__main__':
@@ -463,17 +167,18 @@ class PyFunceble(object):
     @classmethod
     def bypass(cls):
         """
-        Exit the script if `[PyFunceble skip]` is matched into the currently treated commit message.
+        Exit the script if `[PyFunceble skip]` is matched into the latest
+        commit message.
         """
 
         regex_bypass = r'\[PyFunceble\sskip\]'
 
-        if Settings.travis and Helpers.Regex(
+        if CONFIGURATION['travis'] and Helpers.Regex(
                 Helpers.Command('git log -1').execute(),
                 regex_bypass,
                 return_data=False).match():
 
-            AutoSave(True)
+            AutoSave(True, is_bypass=True)
 
     @classmethod
     def print_header(cls):
@@ -481,21 +186,59 @@ class PyFunceble(object):
         Decide if we print or not the header.
         """
 
-        if not Settings.quiet:
+        if not CONFIGURATION['quiet'] and not CONFIGURATION['header_printed']:
             print('\n')
-            if Settings.less:
+            if CONFIGURATION['less']:
                 Prints(None, 'Less').header()
             else:
                 Prints(None, 'Generic').header()
 
-    def domain(self):
+            CONFIGURATION['header_printed'] = True
+
+    def domain(self, domain=None, last_domain=None):
         """
         Manage the case that we want to test only a domain.
+
+        Argument:
+            - domain: str
+                The domain or IP to test.
+            - last_domain: str
+                The last domain of the file we are testing.
         """
 
+        if domain:
+            CONFIGURATION['domain'] = self._format_domain(domain)
         self.print_header()
-        if __name__ == '__main__' and Settings.simple:
-            print(ExpirationDate().get())
+
+        if __name__ == '__main__':
+            if CONFIGURATION['simple']:
+                print(ExpirationDate().get())
+            else:
+                status = ExpirationDate().get()
+
+            if not CONFIGURATION['simple'] and CONFIGURATION['file_to_test']:
+                if CONFIGURATION['inactive_database']:
+                    if status == 'ACTIVE':
+                        Database().remove()
+                    else:
+                        Database().add()
+
+                AutoContinue().backup()
+
+                if domain != last_domain:
+                    AutoSave()
+                else:
+                    ExecutionTime('stop')
+                    Percentage().log()
+                    self.reset_counters()
+                    AutoContinue().backup()
+
+                    self.colored_logo()
+
+                    AutoSave(True)
+
+            CONFIGURATION['http_code'] = ''
+            CONFIGURATION['referer'] = ''
         else:
             ExpirationDate().get()
             return
@@ -507,66 +250,129 @@ class PyFunceble(object):
         """
 
         for string in [
-                'number_of_up',
-                'number_of_down',
-                'number_of_invalid',
-                'number_of_tested']:
-            setattr(Settings, string, 0)
-
-        return
-
-    def clean(self, list_to_test):
-        """
-        Check if we have to clean the environnement.
-
-        :param list_to_test: A list, the current list we are going to test.
-        """
-
-        try:
-            if Settings.number_of_tested == 0 \
-                or list_to_test[Settings.number_of_tested - 1] == list_to_test[-1] \
-                    or Settings.number_of_tested == len(list_to_test):
-                self.reset_counters()
-
-                from tool import Clean
-                Clean(True)
-        except IndexError:
-            self.reset_counters()
-
-            from tool import Clean
-            Clean(True)
-
+                'up',
+                'down',
+                'invalid',
+                'tested']:
+            CONFIGURATION['counter']['number'].update({
+                string: 0
+            })
         return
 
     @classmethod
-    def format_domain(cls, extracted_domain):
+    def colored_logo(cls):
+        """
+        This method print the colored logo based on global results.
+        """
+
+        if not CONFIGURATION['quiet']:
+            if CONFIGURATION['counter']['percentage']['up'] >= 50:
+                print(Fore.GREEN + PYFUNCEBLE_LOGO)
+            else:
+                print(Fore.RED + PYFUNCEBLE_LOGO)
+
+    @classmethod
+    def _format_domain(cls, extracted_domain):
         """
         Format the extracted domain before passing it to the system.
 
-        :param extracted_domain: A string, the extracted domain from the file.
+        Argument:
+            extracted_domain: str
+                The extracted domain from the file.
+
+        Returns: str
+            The domain to test.
         """
 
-        separation = [' ', '\t']
+        if not extracted_domain.startswith('#'):
 
-        for string in separation:
-            if string in extracted_domain:
-                result = extracted_domain.split('#')[0].strip()
-                return result.split(string)[-1]
+            if '#' in extracted_domain:
+                extracted_domain = extracted_domain[:extracted_domain.find(
+                    '#')].strip()
 
-        return extracted_domain
+            tabs = '\t'
+            space = ' '
+
+            tabs_position, space_position = (
+                extracted_domain.find(tabs), extracted_domain.find(space))
+
+            if tabs_position > -1 and space_position > -1:
+                if space_position < tabs_position:
+                    separator = space
+                else:
+                    separator = tabs
+            elif tabs_position > -1:
+                separator = tabs
+            elif space_position > -1:
+                separator = space
+            else:
+                separator = ''
+
+            if separator:
+                splited_line = extracted_domain.split(separator)
+
+                index = 1
+                while index < len(splited_line):
+                    if splited_line[index]:
+                        break
+                    index += 1
+
+                return splited_line[index]
+            return extracted_domain
+        return ""
 
     @classmethod
-    def adblock_decode(cls, list_to_test):
+    def _format_adblock_decoded(cls, to_format, result=None):
+        """
+        Format the exctracted adblock line before passing it to the system.
+
+        Arguments:
+            - to_format: str
+                The extracted line from the file.
+            - result: None or list
+                The list of extracted domain.
+
+        Returns: list
+            The list of extracted domains.
+        """
+
+        if not result:
+            result = []
+
+        for data in Helpers.List(to_format).format():
+            if data:
+                if '#' in data:
+                    return cls._format_adblock_decoded(data.split('#'), result)
+                elif ',' in data:
+                    return cls._format_adblock_decoded(data.split(','), result)
+                elif '~' in data:
+                    return cls._format_adblock_decoded(data.split('~'), result)
+                elif '!' in data:
+                    return cls._format_adblock_decoded(data.split('!'), result)
+                elif '|' in data:
+                    return cls._format_adblock_decoded(data.split('|'), result)
+                elif data and \
+                    (ExpirationDate.is_domain_valid(data) or
+                     ExpirationDate.is_ip_valid(data)):
+                    result.append(data)
+
+        return result
+
+    def adblock_decode(self, list_to_test):
         """
         Convert the adblock format into a readable format which is understood
         by the system.
 
-        Arguments:
+        Argument:
             - list_to_test: A list, the read content of the given file.
+
+        Returns: list
+            The list of domain to test.
         """
 
         result = []
-        regex = r'^\|\|(.*)\^$'
+        regex = r'^(?:.*\|\|)([^\/\$\^]{1,}).*$'
+        regex_v2 = r'(.*\..*)(?:#{1,}.*)'
 
         for line in list_to_test:
             rematch = Helpers.Regex(
@@ -576,108 +382,177 @@ class PyFunceble(object):
                 rematch=True,
                 group=0).match()
 
-            if rematch != []:
-                filtered = Helpers.Regex(
-                    rematch[0],
-                    r'(.*)\/',
-                    return_data=True,
-                    rematch=True).match()
+            rematch_v2 = Helpers.Regex(
+                line,
+                regex_v2,
+                return_data=True,
+                rematch=True,
+                group=0).match()
 
-                if filtered == []:
-                    result.extend(rematch)
-                else:
-                    result.extend(filtered)
+            if rematch:
+                result.extend(rematch)
+
+            if rematch_v2:
+                result.extend(
+                    Helpers.List(
+                        self._format_adblock_decoded(rematch_v2)).format())
 
         return result
 
-    def file(self, file_path):  # pylint: disable=too-many-branches,too-many-statements
+    @classmethod
+    def _extract_domain_from_file(cls):
+        """
+        This method extract all non commented lines.
+
+        Returns: lis
+            Each line of the file == an element of the list.
+        """
+
+        result = []
+
+        if path.isfile(CONFIGURATION['file_to_test']):
+            with open(CONFIGURATION['file_to_test']) as file:
+                for line in file:
+                    if not line.startswith('#'):
+                        result.append(line.rstrip('\n').strip())
+        else:
+            raise FileNotFoundError(CONFIGURATION['file_to_test'])
+
+        return result
+
+    def file(self):
         """
         Manage the case that need to test each domain of a given file path.
         Note: 1 domain per line.
-
-        :param file_path: A string, a path to a file to read.
         """
 
-        list_to_test = []
+        list_to_test = self._extract_domain_from_file()
 
-        AutoContinue().restore(file_path)
-        self.print_header()
+        AutoContinue().restore()
 
-        for read in open(file_path):
-            read = read.rstrip('\n').strip()
-
-            if not read.startswith('#'):
-                list_to_test.append(read)
-
-        if Settings.adblock:
+        if CONFIGURATION['adblock']:
             list_to_test = self.adblock_decode(list_to_test)
+        else:
+            list_to_test = list(map(self._format_domain, list_to_test))
 
-        self.clean(list_to_test)
+        PyFunceble.Clean(list_to_test)
 
-        if Settings.inactive_database:
-            Database(file_path).to_test()
+        if CONFIGURATION['inactive_database']:
+            Database().to_test()
 
-            if file_path in Settings.inactive_db \
-                and 'to_test' in Settings.inactive_db[file_path] \
-                    and Settings.inactive_db[file_path]['to_test'] != []:
-                list_to_test.extend(Settings.inactive_db[file_path]['to_test'])
+            if CONFIGURATION['file_to_test'] in CONFIGURATION['inactive_db'] \
+                and 'to_test' in CONFIGURATION['inactive_db'][CONFIGURATION['file_to_test']] \
+                    and CONFIGURATION['inactive_db'][CONFIGURATION['file_to_test']]['to_test']:
+                list_to_test.extend(
+                    CONFIGURATION['inactive_db'][CONFIGURATION['file_to_test']]['to_test'])
 
-        list_to_test = Helpers.List(list_to_test).format()
+        regex_delete = r'localhost$|localdomain$|local$|broadcasthost$|0\.0\.0\.0$|allhosts$|allnodes$|allrouters$|localnet$|loopback$|mcastprefix$'  # pylint: disable=line-too-long
 
-        i = int(Settings.number_of_tested)
+        list_to_test = Helpers.List(
+            Helpers.Regex(
+                list_to_test,
+                regex_delete).not_matching_list()).format()
 
-        while i < len(list_to_test):
-            domain = list_to_test[i]
+        if CONFIGURATION['filter']:
+            list_to_test = Helpers.List(
+                Helpers.Regex(
+                    list_to_test,
+                    CONFIGURATION['filter'],
+                    escape=True).matching_list()).format()
 
-            if Settings.to_filter != '' and not Helpers.Regex(
-                    domain, Settings.to_filter, return_data=False, escape=True).match():
+        list(map(self.domain,
+                 list_to_test[CONFIGURATION['counter']['number']['tested']:],
+                 repeat(list_to_test[-1])))
 
-                print(
-                    '\rSearching the next occurrence of "%s" ...' %
-                    Settings.to_filter, end='')
-                stdout.flush()
+    @classmethod
+    def switch(cls, variable):  # pylint: disable=inconsistent-return-statements
+        """
+        Switch CONFIGURATION variables to their opposite.
 
-                i += 1
-                continue
+        Argument:
+            - variable: str
+                The CONFIGURATION[variable_name] to switch.
+
+        Returns: bool
+            The opposite of the installed value of Settings.variable_name.
+
+        Raise:
+            - Exception: When the configuration is not valid. In other words,
+                if the CONFIGURATION[variable_name] is not a bool.
+        """
+
+        current_state = dict.get(CONFIGURATION, variable)
+
+        if isinstance(current_state, bool):
+            if current_state:
+                return False
+            return True
+
+        to_print = 'Please use the auto update or post an issue to %s'
+
+        raise Exception(to_print % LINKS['repo'] + '/issues')
+
+    class Clean(object):
+        """
+        Directory cleaning logic.
+        This class clean the output/ directory.
+
+        Argument:
+            - list_to_test: list
+                The list of domains to test.
+        """
+
+        def __init__(self, list_to_test):
+            if list_to_test:
+                try:
+                    number_of_tested = CONFIGURATION['counter']['number']['tested']
+
+                    if number_of_tested == 0 \
+                            or list_to_test[number_of_tested - 1] == list_to_test[-1] \
+                            or number_of_tested == len(list_to_test):
+                        PyFunceble.reset_counters()
+
+                        self.all()
+                except IndexError:
+                    PyFunceble.reset_counters()
+
+                    self.all()
             else:
-                print('\r', end='')
+                self.all()
 
-            regex_listing = [
-                r'.*localhost.*',
-                r'.*local.*',
-                r'.*broadcasthost.*']
-            match_result = []
+        @classmethod
+        def file_to_delete(cls):
+            """
+            Return the list of file to delete.
+            """
 
-            for regx in regex_listing:
-                match_result.append(
-                    Helpers.Regex(
-                        domain,
-                        regx,
-                        return_data=False).match())
+            directory = CURRENT_DIRECTORY + OUTPUTS['parent_directory']
 
-            domain = domain.rstrip('\n')
+            if not directory.endswith(directory_separator):
+                directory += directory_separator
 
-            if domain == '' or True in match_result:
-                i += 1
-                continue
+            result = []
 
-            Settings.domain = self.format_domain(domain)
-            status = ExpirationDate().get()
+            for root, dirs, files in walk(  # pylint: disable=unused-variable
+                    directory):
+                for file in files:
+                    if file not in ['.gitignore', '.keep']:
+                        if root.endswith(directory_separator):
+                            result.append(root + file)
+                        else:
+                            result.append(root + directory_separator + file)
 
-            if Settings.inactive_database:
-                if status == 'ACTIVE':
-                    Database(file_path).remove()
-                else:
-                    Database(file_path).add()
+            return result
 
-            AutoContinue().backup(file_path)
-            AutoSave()
+        def all(self):
+            """
+            Delete all discovered files.
+            """
 
-            Settings.http_code = ''
-            Settings.referer = ''
-            i += 1
+            to_delete = self.file_to_delete()
 
-        AutoSave(True)
+            for file in to_delete:
+                Helpers.File(file).delete()
 
 
 class AutoContinue(object):
@@ -686,29 +561,32 @@ class AutoContinue(object):
     """
 
     def __init__(self):
-        if Settings.auto_continue:
-            if path.isfile(Settings.autocontinue_log_file):
+        if CONFIGURATION['auto_continue']:
+            self.autocontinue_log_file = CURRENT_DIRECTORY + \
+                OUTPUTS['parent_directory'] + OUTPUTS['logs']['filenames']['auto_continue']
+
+            if path.isfile(self.autocontinue_log_file):
                 self.backup_content = Helpers.Dict().from_json(
-                    Helpers.File(Settings.autocontinue_log_file).read())
+                    Helpers.File(self.autocontinue_log_file).read())
             else:
                 self.backup_content = {}
-                Helpers.File(Settings.autocontinue_log_file).write(
+                Helpers.File(self.autocontinue_log_file).write(
                     str(self.backup_content))
 
-    def backup(self, file_path):
+    def backup(self):
         """
         Backup the current execution state.
-
-        :param file_path: The path of the currently tested file.
         """
 
-        if Settings.auto_continue:
+        if CONFIGURATION['auto_continue']:
             data_to_backup = {}
-            data_to_backup[file_path] = {
-                "number_of_tested": Settings.number_of_tested,
-                "number_of_up": Settings.number_of_up,
-                "number_of_down": Settings.number_of_down,
-                "number_of_invalid": Settings.number_of_invalid
+            configuration_counter = CONFIGURATION['counter']['number']
+
+            data_to_backup[CONFIGURATION['file_to_test']] = {
+                "tested": configuration_counter['tested'],
+                "up": configuration_counter['up'],
+                "down": configuration_counter['down'],
+                "invalid": configuration_counter['invalid']
             }
 
             to_save = {}
@@ -716,155 +594,191 @@ class AutoContinue(object):
             to_save.update(self.backup_content)
             to_save.update(data_to_backup)
 
-            Helpers.Dict(to_save).to_json(Settings.autocontinue_log_file)
+            Helpers.Dict(to_save).to_json(self.autocontinue_log_file)
 
-    def restore(self, file_to_restore):
+    def restore(self):
         """
         Restore data from the given path.
-
-        :param file_to_restore: A string, a path to file to test.
         """
 
-        if Settings.auto_continue and self.backup_content != {}:
+        file_to_restore = CONFIGURATION['file_to_test']
+
+        if CONFIGURATION['auto_continue'] and self.backup_content:
             if file_to_restore in self.backup_content:
                 to_initiate = [
-                    'number_of_up',
-                    'number_of_down',
-                    'number_of_invalid',
-                    'number_of_tested']
+                    'up',
+                    'down',
+                    'invalid',
+                    'tested']
+
+                alternatives = {
+                    'up': 'number_of_up',
+                    'down': 'number_of_down',
+                    'invalid': 'number_of_invalid',
+                    'tested': 'number_of_tested'
+                }
 
                 for string in to_initiate:
-                    setattr(
-                        Settings,
-                        string,
-                        self.backup_content[file_to_restore][string])
+                    try:
+                        CONFIGURATION['counter']['number'].update({
+                            string: self.backup_content[file_to_restore][string]
+                        })
+                    except KeyError:
+                        CONFIGURATION['counter']['number'].update({
+                            string: self.backup_content[file_to_restore][alternatives[string]]
+                        })
 
 
-class AutoSave(object):
+class AutoSave(object):  # pylint: disable=too-few-public-methods
     """
     Logic behind autosave.
+
+    Arguments:
+        - is_last_domain: bool
+            Tell the autosave logic if we are at the end.
+        - is_bypass: bool
+            Tell the autosave logic if we are in bypass mode.
     """
 
-    def __init__(self, last_domain=False):
-        if Settings.travis:
-            self.last = last_domain
-            self.travis()
+    def __init__(self, is_last_domain=False, is_bypass=False):
+        if CONFIGURATION['travis']:
+            self.last = is_last_domain
+            self.bypass = is_bypass
+            self._travis()
 
     @classmethod
     def travis_permissions(cls):
         """
         Set permissions in order to avoid issues before commiting.
         """
+        try:
+            build_dir = environ['TRAVIS_BUILD_DIR']
+            commands = [
+                'sudo chown -R travis:travis %s' %
+                (build_dir),
+                'sudo chgrp -R travis %s' %
+                (build_dir),
+                'sudo chmod -R g+rwX %s' %
+                (build_dir),
+                'sudo chmod 777 -Rf %s.git' %
+                (build_dir +
+                 directory_separator),
+                r"sudo find %s -type d -exec chmod g+x '{}' \;" %
+                (build_dir)]
 
-        build_dir = environ['TRAVIS_BUILD_DIR']
-        commands = [
-            'sudo chown -R travis:travis %s' % (build_dir),
-            'sudo chgrp -R travis %s' % (build_dir),
-            'sudo chmod -R g+rwX %s' % (build_dir),
-            'sudo chmod 777 -Rf %s.git' % (build_dir + Settings.dir_separator),
-            r"sudo find %s -type d -exec chmod g+x '{}' \;" % (build_dir)
-        ]
+            for command in commands:
+                Helpers.Command(command).execute()
 
-        for command in commands:
-            Helpers.Command(command).execute()
+            if Helpers.Command(
+                    'git config core.sharedRepository').execute() == '':
+                Helpers.Command(
+                    'git config core.sharedRepository group').execute()
+        except KeyError:
+            pass
 
-        if Helpers.Command('git config core.sharedRepository').execute() == '':
-            Helpers.Command('git config core.sharedRepository group').execute()
-
-        return
-
-    def travis(self):
+    def _travis(self):
         """
         Logic behind travis autosave.
         """
 
         current_time = int(strftime('%s'))
+        time_autorisation = False
 
         try:
-            if self.last or current_time >= int(
-                    Settings.start) + (int(Settings.travis_autosave_minutes) * 60):
-                Percentage().log()
-                self.travis_permissions()
+            time_autorisation = current_time >= int(
+                CONFIGURATION['start']) + (int(CONFIGURATION['travis_autosave_minutes']) * 60)
+        except KeyError:
+            if self.last and not self.bypass:
+                raise Exception(
+                    'Please review the way `ExecutionTime()` is called.')
 
-                command = 'git add --all && git commit -a -m "%s"'
+        if self.last or time_autorisation or self.bypass:
+            Percentage().log()
+            self.travis_permissions()
 
-                if self.last:
-                    if Settings.command_before_end != '':
-                        Helpers.Command(Settings.command_before_end).execute()
+            command = 'git add --all && git commit -a -m "%s"'
 
-                    message = Settings.travis_autosave_final_commit + \
-                        ' [ci skip]'
+            if self.last or self.bypass:
+                if CONFIGURATION['command_before_end']:
+                    Helpers.Command(
+                        CONFIGURATION['command_before_end']).execute()
 
-                    Helpers.Command(command % message).execute()
-                else:
-                    Helpers.Command(command %
-                                    Settings.travis_autosave_commit).execute()
+                message = CONFIGURATION['travis_autosave_final_commit'] + \
+                    ' [ci skip]'
 
+                Helpers.Command(command % message).execute()
+            else:
                 Helpers.Command(
-                    'git push origin %s' %
-                    Settings.travis_branch).execute()
-                exit(0)
-            return
-        except AttributeError:
-            return
+                    command %
+                    CONFIGURATION['travis_autosave_commit']).execute()
+
+            Helpers.Command(
+                'git push origin %s' %
+                CONFIGURATION['travis_branch']).execute()
+            exit(0)
 
 
 class Database(object):
     """
     Logic behind the generation and the usage of a database system.
     The main idea behind this is to provide an inactive-db.json and test all
-        inactive domain which are into to it regularly
-
-    :param file_path: A string, the file path we are working with.
+    inactive domain which are into to it regularly
     """
 
-    def __init__(self, file_path):
-        self.file_path = file_path
+    def __init__(self):
+        self.file_path = CONFIGURATION['file_to_test']
         self.current_time = int(strftime('%s'))
-        self.day_in_seconds = Settings.days_between_db_retest * 24 * 3600
+        self.day_in_seconds = CONFIGURATION['days_between_db_retest'] * 24 * 3600
+        self.inactive_db_path = CURRENT_DIRECTORY + \
+            OUTPUTS['default_files']['inactive_db']
 
-    @classmethod
-    def retrieve(cls):
+    def _retrieve(self):
         """
         Return the current content of the inactive-db.json file.
         """
 
-        if path.isfile(Settings.inactive_db_path):
-            Settings.inactive_db = Helpers.Dict().from_json(
-                Helpers.File(Settings.inactive_db_path).read())
+        if path.isfile(self.inactive_db_path):
+            CONFIGURATION['inactive_db'] = Helpers.Dict().from_json(
+                Helpers.File(self.inactive_db_path).read())
         else:
-            Settings.inactive_db = {}
+            CONFIGURATION['inactive_db'] = {}
 
         return
 
-    @classmethod
-    def backup(cls):
+    def _backup(self):
         """
         Save the current database into the inactive-db.json file.
         """
 
-        if Settings.inactive_database:
+        if CONFIGURATION['inactive_database']:
             Helpers.Dict(
-                Settings.inactive_db).to_json(
-                    Settings.inactive_db_path)
+                CONFIGURATION['inactive_db']).to_json(
+                    self.inactive_db_path)
 
-    def add_to_test(self, to_add):
+    def _add_to_test(self, to_add):
         """
-        Add an element or a list of element into Settings.inactive_db[self.file_path]['to_test'].
+        Add an element or a list of element into
+        CONFIGURATION['inactive_db'][self.file_path]['to_test'].
+
+        Argument:
+            - to_add: str
+                The domain or ip to add.
         """
 
         if not isinstance(to_add, list):
             to_add = [to_add]
 
-        if self.file_path in Settings.inactive_db:
-            if 'to_test' in Settings.inactive_db[self.file_path]:
-                Settings.inactive_db[self.file_path]['to_test'].extend(to_add)
+        if self.file_path in CONFIGURATION['inactive_db']:
+            if 'to_test' in CONFIGURATION['inactive_db'][self.file_path]:
+                CONFIGURATION['inactive_db'][self.file_path]['to_test'].extend(
+                    to_add)
             else:
-                Settings.inactive_db[self.file_path]['to_test'] = to_add
+                CONFIGURATION['inactive_db'][self.file_path]['to_test'] = to_add
         else:
-            Settings.inactive_db.update({self.file_path: {'to_test': to_add}})
+            CONFIGURATION['inactive_db'].update(
+                {self.file_path: {'to_test': to_add}})
 
-        self.backup()
+        self._backup()
 
     def to_test(self):
         """
@@ -874,105 +788,113 @@ class Database(object):
         result = []
         to_delete = []
 
-        self.retrieve()
+        self._retrieve()
 
-        if self.file_path in Settings.inactive_db:
-            for data in Settings.inactive_db[self.file_path]:
+        if self.file_path in CONFIGURATION['inactive_db']:
+            for data in CONFIGURATION['inactive_db'][self.file_path]:
                 if data != 'to_test':
                     if self.current_time > int(data) + self.day_in_seconds:
                         result.extend(
-                            Settings.inactive_db[self.file_path][data])
+                            CONFIGURATION['inactive_db'][self.file_path][data])
                         to_delete.append(data)
 
-            Helpers.Dict(Settings.inactive_db[self.file_path]).remove_key(
-                to_delete)
+            Helpers.Dict(CONFIGURATION['inactive_db']
+                         [self.file_path]).remove_key(to_delete)
 
-            self.add_to_test(result)
+            self._add_to_test(result)
         else:
-            Settings.inactive_db.update({self.file_path: {}})
+            CONFIGURATION['inactive_db'].update({self.file_path: {}})
 
-        self.backup()
+        self._backup()
 
-    def timestamp(self):
+    def _timestamp(self):
         """
         Return the timestamp where we are going to save our current list.
+
+        Returns: int or str
+            The timestamp to append with the currently tested domains.
         """
 
         result = 0
         to_delete = []
 
-        if self.file_path in Settings.inactive_db \
-                and Settings.inactive_db[self.file_path] != {}:
-            for data in Settings.inactive_db[self.file_path]:
+        if self.file_path in CONFIGURATION['inactive_db'] \
+                and CONFIGURATION['inactive_db'][self.file_path]:
+            for data in CONFIGURATION['inactive_db'][self.file_path]:
                 if data != 'to_test':
                     if self.current_time < int(data) + self.day_in_seconds:
                         result = int(data)
                     else:
                         result = self.current_time
-                        self.add_to_test(
-                            Settings.inactive_db[self.file_path][data])
+                        self._add_to_test(
+                            CONFIGURATION['inactive_db'][self.file_path][data])
                         to_delete.append(data)
 
-            Helpers.Dict(Settings.inactive_db[self.file_path]).remove_key(
-                to_delete)
+            Helpers.Dict(CONFIGURATION['inactive_db']
+                         [self.file_path]).remove_key(to_delete)
 
             return result
         return self.current_time
 
     def add(self):
         """
-        Save the current Settings.domain into the current timestamp.
+        Save the current CONFIGURATION['domain'] into the current timestamp.
         """
 
-        timestamp = str(self.timestamp())
+        timestamp = str(self._timestamp())
 
-        if self.file_path in Settings.inactive_db:
-            if timestamp in Settings.inactive_db[self.file_path]:
-                if Settings.domain not in Settings.inactive_db[self.file_path][timestamp]:
-                    Settings.inactive_db[self.file_path][timestamp].append(
-                        Settings.domain)
+        if self.file_path in CONFIGURATION['inactive_db']:
+            if timestamp in CONFIGURATION['inactive_db'][self.file_path]:
+                if CONFIGURATION['domain'] \
+                        not in CONFIGURATION['inactive_db'][self.file_path][timestamp]:
+                    CONFIGURATION['inactive_db'][self.file_path][timestamp].append(
+                        CONFIGURATION['domain'])
             else:
-                Settings.inactive_db[self.file_path].update(
-                    {timestamp: [Settings.domain]})
+                CONFIGURATION['inactive_db'][self.file_path].update(
+                    {timestamp: [CONFIGURATION['domain']]})
 
-            if 'to_test' in Settings.inactive_db[self.file_path] \
-                    and Settings.domain in Settings.inactive_db[self.file_path]['to_test']:
-                Settings.inactive_db[self.file_path]['to_test'].remove(
-                    Settings.domain)
+            if 'to_test' in CONFIGURATION['inactive_db'][self.file_path] \
+                    and CONFIGURATION['domain'] \
+                    in CONFIGURATION['inactive_db'][self.file_path]['to_test']:
+                CONFIGURATION['inactive_db'][self.file_path]['to_test'].remove(
+                    CONFIGURATION['domain'])
         else:
-            Settings.inactive_db[self.file_path] = {
-                timestamp: [Settings.domain]}
+            CONFIGURATION['inactive_db'][self.file_path] = {
+                timestamp: [CONFIGURATION['domain']]}
 
-        self.backup()
+        self._backup()
 
     def remove(self):
         """
-        Remove all occurence of Settings.domain into the database.
+        Remove all occurence of CONFIGURATION['domain'] into the database.
         """
 
-        if self.file_path in Settings.inactive_db:
-            for data in Settings.inactive_db[self.file_path]:
-                if Settings.domain in Settings.inactive_db[self.file_path][data]:
-                    Settings.inactive_db[self.file_path][data].remove(
-                        Settings.domain)
+        if self.file_path in CONFIGURATION['inactive_db']:
+            for data in CONFIGURATION['inactive_db'][self.file_path]:
+                if CONFIGURATION['domain'] in CONFIGURATION['inactive_db'][self.file_path][data]:
+                    CONFIGURATION['inactive_db'][self.file_path][data].remove(
+                        CONFIGURATION['domain'])
 
-        self.backup()
+        self._backup()
 
 
-class ExecutionTime(object):
+class ExecutionTime(object):  # pylint: disable=too-few-public-methods
     """
     Set and return the exection time of the program.
 
-    :param action: A string, 'start' or 'stop'.
-    :param return_result: A boolean, if true, we return the executionn time.
+    Arguments:
+        - action: 'start' or 'stop'
+        - return_result: bool
+            True: we return the execution time.
+            False: we return nothing.
     """
 
     def __init__(self, action='start'):
-        if Settings.show_execution_time or Settings.travis:
+        if CONFIGURATION['show_execution_time'] or CONFIGURATION['travis']:
             if action == 'start':
-                self.starting_time()
+                self._starting_time()
             elif action == 'stop':
-                self.stoping_time()
+                self._stoping_time()
 
                 print(
                     Fore.MAGENTA +
@@ -981,28 +903,31 @@ class ExecutionTime(object):
                     self.format_execution_time())
 
     @classmethod
-    def starting_time(cls):
+    def _starting_time(cls):
         """
         Set the starting time.
         """
 
-        Settings.start = int(strftime('%s'))
+        CONFIGURATION['start'] = int(strftime('%s'))
 
     @classmethod
-    def stoping_time(cls):
+    def _stoping_time(cls):
         """
         Set the ending time.
         """
 
-        Settings.end = int(strftime('%s'))
+        CONFIGURATION['end'] = int(strftime('%s'))
 
     @classmethod
-    def calculate(cls):
+    def _calculate(cls):
         """
         calculate the difference between starting and ending time.
+
+        Returns: dict
+            A dics with `days`,`hours`,`minutes` and `seconds`.
         """
 
-        time_difference = Settings.end - Settings.start
+        time_difference = CONFIGURATION['end'] - CONFIGURATION['start']
 
         return {
             'days': str((time_difference // 24) % 24).zfill(2),
@@ -1014,10 +939,13 @@ class ExecutionTime(object):
     def format_execution_time(self):
         """
         Format the calculated time into a human readable format.
+
+        Returns: str
+            A human readable date.
         """
 
         result = ''
-        calculated_time = self.calculate()
+        calculated_time = self._calculate()
         times = list(calculated_time.keys())
 
         for time in times:
@@ -1034,10 +962,16 @@ class Prints(object):
     Print data on screen and into a file if needed.
     Template Possibilities: Percentage, Less, HTTP and any status you want.
 
-    :param to_print: A list, the list of data to print.
-    :param template: A string, the template to use.
-    :param output_file: A string, the file to write.
-    :param only_on_file: A boolean, if true, we don't print data on screen.
+    Arguments:
+        - to_print: list
+            The list of data to print.
+        - template: str
+            The template to use.
+        - output_file: str
+            The path to the file to write.
+        - only_on_file: bool
+            True: We don't print data on screen.
+            False: We print data on screen.
     """
 
     def __init__(
@@ -1057,15 +991,15 @@ class Prints(object):
             ['Domain', 'Status', 'Expiration Date', 'Source', 'HTTP Code', 'Analyze Date'],
             [100, 11, 17, 10, 10, 20]))
 
-        self.headers[Settings.official_up_status] = OrderedDict(zip(
+        self.headers[STATUS['official']['up']] = OrderedDict(zip(
             ['Domain', 'Expiration Date', 'Source', 'HTTP Code', 'Analyze Date'],
             [100, 17, 10, 10, 20]))
 
-        self.headers[Settings.official_down_status] = OrderedDict(zip(
+        self.headers[STATUS['official']['down']] = OrderedDict(zip(
             ['Domain', 'WHOIS Server', 'Status', 'Source', 'HTTP Code', 'Analyze Date'],
             [100, 35, 11, 10, 10, 20]))
 
-        self.headers[Settings.official_invalid_status] = OrderedDict(zip(
+        self.headers[STATUS['official']['invalid']] = OrderedDict(zip(
             ['Domain', 'Source', 'HTTP Code', 'Analyze Date'],
             [100, 10, 10, 20]))
 
@@ -1089,24 +1023,31 @@ class Prints(object):
         into a given path, if doesn't exist.
         """
 
-        if not Settings.no_files \
-            and self.output is not None \
-                and self.output != '' \
-        and not path.isfile(self.output):
-            link = ("# File generated with %s\n" % Settings.link_to_repo)
+        if not CONFIGURATION['no_files'] \
+                and self.output \
+                and not path.isfile(self.output):
+            link = (
+                "# File generated with %s\n" %
+                LINKS['repo'])
             date_of_generation = (
                 "# Date of generation: %s \n\n" %
-                Settings.current_datetime)
+                CURRENT_TIME)
 
             Helpers().File(self.output).write(link + date_of_generation)
 
     @classmethod
-    def header_constructor(cls, data_to_print, separator='-'):
+    def _header_constructor(cls, data_to_print, separator='-'):
         """
         Construct header of the table according to template.
 
-        :param data_to_print: A list, the list of data to print into the header.
-        :param separator: A string, the separator to use forr the table generation.
+        Arguments:
+            - data_to_print: list
+                The list of data to print into the header.
+            - separator: str
+                The separator to use for the table header generation.
+
+        Returns: list
+            The data to print in list format.
         """
 
         header_data = []
@@ -1140,45 +1081,57 @@ class Prints(object):
         Please consider as "header" the title of each columns.
         """
 
-        if not Settings.header_printed or self.template == 'Percentage':
-            if self.template in Settings.generic_status or self.template == 'Generic_File':
+        if not CONFIGURATION['header_printed'] \
+                or self.template == 'Percentage' \
+                or do_not_print:
+            if self.template.lower(
+            ) in STATUS['list']['generic'] or self.template == 'Generic_File':
                 to_print = self.headers['Generic']
 
-                if self.template in Settings.generic_status:
+                if self.template.lower() in STATUS['list']['generic']:
                     to_print = Helpers.Dict(
                         to_print).remove_key('Analyze Date')
-            if self.template in Settings.up_status:
-                to_print = self.headers[Settings.official_up_status]
-            elif self.template in Settings.down_status:
-                to_print = self.headers[Settings.official_down_status]
-            elif self.template in Settings.invalid_status:
-                to_print = self.headers[Settings.official_invalid_status]
+            if self.template.lower() in STATUS['list']['up']:
+                to_print = self.headers[STATUS['official']['up']]
+            elif self.template.lower() in STATUS['list']['down']:
+                to_print = self.headers[STATUS['official']['down']]
+            elif self.template.lower() in STATUS['list']['invalid']:
+                to_print = self.headers[STATUS['official']['invalid']]
             elif self.template == 'Less' or self.template == 'Percentage' \
                     or self.template == 'HTTP':
                 to_print = self.headers[self.template]
 
-                if self.template == 'Less' and not Settings.http_code_status:
+                if self.template == 'Less' and not HTTP_CODE['active']:
                     to_print['Source'] = 10
 
-            if not Settings.http_code_status:
+            if not HTTP_CODE['active']:
                 to_print = Helpers.Dict(to_print).remove_key('HTTP Code')
 
             self.currently_used_header = to_print
 
             if not do_not_print:
                 self.before_header()
-                for formated_template in self.header_constructor(to_print):
+                for formated_template in self._header_constructor(to_print):
                     if not self.only_on_file:
                         print(formated_template)
-                    if self.output is not None and self.output != '':
+                    if self.output:
                         Helpers.File(
                             self.output).write(formated_template + '\n')
 
-    def data_constructor(self, size):
+    def _data_constructor(self, size):
         """
         Construct the table of data according to given size.
 
-        :param size: A list, The maximal length of each string in the table.
+        Argument:
+            - size: list
+                The maximal length of each string in the table.
+
+        Returns: OrderedDict
+            An dict with all information about the data and how to which what
+            maximal size to print it.
+
+        Raise:
+            - Exception: if the data and the size does not have the same length.
         """
 
         result = OrderedDict()
@@ -1197,11 +1150,16 @@ class Prints(object):
         return result
 
     @classmethod
-    def size_from_header(cls, header):
+    def _size_from_header(cls, header):
         """
         Get the size of each columns from the header.
 
-        :param header_type: The header we have to get.
+        Argument:
+            - header_type: dict
+                The header we have to get the size from.
+
+        Returns: list
+            The maximal size of the each data to print.
         """
 
         result = []
@@ -1211,17 +1169,22 @@ class Prints(object):
 
         return result
 
-    def colorify(self, data):
+    def _colorify(self, data):
         """
         Retun colored string.
 
-        :param data: A string, the string to colorify.
+        Argument:
+            - data: str
+                The string to colorify.
+
+        Returns: str
+            A colored string.
         """
 
         if self.template in ['Generic', 'Less']:
-            if self.data_to_print[1] in Settings.up_status:
+            if self.data_to_print[1].lower() in STATUS['list']['up']:
                 data = Fore.BLACK + Back.GREEN + data
-            elif self.data_to_print[1] in Settings.down_status:
+            elif self.data_to_print[1].lower() in STATUS['list']['down']:
                 data = Fore.BLACK + Back.RED + data
             else:
                 data = Fore.BLACK + Back.CYAN + data
@@ -1230,7 +1193,9 @@ class Prints(object):
     def data(self):
         """
         Management and input of data to the table.
-        Please consider as "
+
+        Raise:
+            - Exception: When self.data_to_print is not a list.
         """
 
         if isinstance(self.data_to_print, list):
@@ -1242,26 +1207,26 @@ class Prints(object):
 
             if self.template not in alone_cases and self.template not in without_header:
                 self.header(True)
-                to_print_size = self.size_from_header(
+                to_print_size = self._size_from_header(
                     self.currently_used_header)
             elif self.template in without_header:
                 for data in self.data_to_print:
                     to_print_size.append(str(len(data)))
             else:
-                to_print_size = self.size_from_header(
+                to_print_size = self._size_from_header(
                     self.headers[self.template])
 
-            to_print = self.data_constructor(to_print_size)
+            to_print = self._data_constructor(to_print_size)
 
             self.before_header()
 
-            for data in self.header_constructor(to_print, False):
-                if self.template in Settings.generic_status or self.template in [
+            for data in self._header_constructor(to_print, False):
+                if self.template.lower() in STATUS['list']['generic'] or self.template in [
                         'Less', 'Percentage']:
                     if not self.only_on_file:
-                        data = self.colorify(data)
+                        data = self._colorify(data)
                         print(data)
-                if not Settings.no_files and self.output is not None and self.output != '':
+                if not CONFIGURATION['no_files'] and self.output:
                     Helpers.File(self.output).write(data + '\n')
         else:
             # This should never happend. If it's happens then there's a big issue
@@ -1269,23 +1234,27 @@ class Prints(object):
             raise Exception('Please review Prints().data()')
 
 
-class HTTPCode(object):
+class HTTPCode(object):  # pylint: disable=too-few-public-methods
     """
     Get and return the HTTP code status of a given domain.
     """
 
     @classmethod
-    def access(cls):
+    def _access(cls):
         """
         Get the HTTP code status.
+
+        Returns: int or None
+            int: The catched HTTP status_code.
+            None: Nothing catched.
         """
 
         try:
             try:
                 try:
                     req = requests.head(
-                        'http://' + Settings.domain + ':80',
-                        timeout=Settings.seconds_before_http_timeout)
+                        'http://%s:80' % CONFIGURATION['domain'],
+                        timeout=CONFIGURATION['seconds_before_http_timeout'])
                 except socket.timeout:
                     return None
             except requests.exceptions.Timeout:
@@ -1298,16 +1267,19 @@ class HTTPCode(object):
     def get(self):
         """
         Return the HTTP code status.
+
+        Returns: str or int
+            str: if no status_code is catched.
+            int: the status_code.
         """
 
-        http_code = self.access()
+        http_code = self._access()
         list_of_valid_http_code = []
 
         for codes in [
-                Settings.active_http_codes,
-                Settings.down_potentially_codes,
-                Settings.potentially_up_codes,
-                Settings.potentially_down_status]:
+                HTTP_CODE['list']['up'],
+                HTTP_CODE['list']['potentially_down'],
+                HTTP_CODE['list']['potentially_up']]:
             list_of_valid_http_code.extend(codes)
 
         if http_code not in list_of_valid_http_code or http_code is None:
@@ -1330,7 +1302,7 @@ class Lookup(object):
             try:
                 try:
                     socket.getaddrinfo(
-                        Settings.domain, 80, 0, 0, socket.IPPROTO_TCP)
+                        CONFIGURATION['domain'], 80, 0, 0, socket.IPPROTO_TCP)
                 except OSError:
                     return False
             except socket.herror:
@@ -1345,22 +1317,30 @@ class Lookup(object):
         """
         Implementation of UNIX whois.
 
-        :param whois_server: A string, The whois server to use to get the record.
-        :param domain: A string, A domain to get whois record.
-        :param timeout: A integer, The timeout to apply to request.
+        Arguments:
+            - whois_server: str
+                The whois server to use to get the record.
+            - domain: str
+                The domain to get the whois record from.
+            - timeout: int
+                The timeout to apply to the request.
+
+        Returns: None or str
+            None: No whois record catched.
+            str: The whois record.
         """
 
         if domain is None:
-            domain = Settings.domain
+            domain = CONFIGURATION['domain']
 
         if timeout is None:
-            timeout = Settings.seconds_before_http_timeout
+            timeout = CONFIGURATION['seconds_before_http_timeout']
 
-        if whois_server is not None and whois_server != '':
+        if whois_server:
 
             req = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-            if Settings.seconds_before_http_timeout % 3 == 0:
+            if CONFIGURATION['seconds_before_http_timeout'] % 3 == 0:
                 req.settimeout(timeout)
             else:
                 req.settimeout(3)
@@ -1403,97 +1383,114 @@ class Percentage(object):
     """
     Calculation of the percentage of each status.
 
-    :param domain_status: A string, the status to increment.
-    :param init: A dict, Dictionary of data to initiate.
+    Arguments:
+        - domain_status: str
+            The status to increment.
+        - init: None or dict
+            None: we start from 0.
+            dict: we start from the passed data.
     """
 
     def __init__(self, domain_status=None, init=None):
         self.status = domain_status
 
-        if init is not None and isinstance(init, dict):
+        if init and isinstance(init, dict):
             for data in init:
-                setattr(Settings, data, init[data])
+                CONFIGURATION['counter']['percentage'].update({
+                    data: init[data]
+                })
 
     def count(self):
         """
         Count the number of domain for each status.
         """
 
-        if self.status is not None or self.status != '':
-            Settings.number_of_tested += 1
+        if self.status:
+            CONFIGURATION['counter']['number']['tested'] += 1
 
-            if self.status in Settings.up_status:
-                Settings.number_of_up += 1
-            elif self.status in Settings.down_status:
-                Settings.number_of_down += 1
+            if self.status.lower() in STATUS['list']['up']:
+                CONFIGURATION['counter']['number']['up'] += 1
+            elif self.status.lower() in STATUS['list']['down']:
+                CONFIGURATION['counter']['number']['down'] += 1
             else:
-                Settings.number_of_invalid += 1
+                CONFIGURATION['counter']['number']['invalid'] += 1
 
     @classmethod
-    def calculate(cls):
+    def _calculate(cls):
         """
         Calculate the percentage of each status.
         """
 
         percentages = {
-            'percentage_of_up': Settings.number_of_up,
-            'percentage_of_down': Settings.number_of_down,
-            'percentage_of_invalid': Settings.number_of_invalid
-        }
+            'up': CONFIGURATION['counter']['number']['up'],
+            'down': CONFIGURATION['counter']['number']['down'],
+            'invalid': CONFIGURATION['counter']['number']['invalid']}
 
         for percentage in percentages:
-            setattr(
-                Settings,
-                percentage,
-                percentages[percentage] *
-                100 //
-                Settings.number_of_tested)
+            calculation = percentages[percentage] * \
+                100 // CONFIGURATION['counter']['number']['tested']
+            CONFIGURATION['counter']['percentage'].update({
+                percentage: calculation
+            })
 
     def log(self):
         """
         Print on screen and on file the percentages for each status.
         """
 
-        if Settings.show_percentage and Settings.number_of_tested > 0:
-            Helpers.File(Settings.output_percentage_log).delete()
+        if CONFIGURATION['show_percentage'] \
+                and CONFIGURATION['counter']['number']['tested'] > 0:
+            output = CURRENT_DIRECTORY + \
+                OUTPUTS['parent_directory'] + \
+                OUTPUTS['logs']['directories']['parent'] + \
+                OUTPUTS['logs']['directories']['percentage'] + \
+                OUTPUTS['logs']['filenames']['percentage']
+            Helpers.File(output).delete()
 
-            self.calculate()
+            self._calculate()
 
-            if not Settings.quiet:
+            if not CONFIGURATION['quiet']:
                 print('\n')
                 Prints(
                     None,
                     'Percentage',
-                    Settings.output_percentage_log).header()
+                    output).header()
 
-                for to_print in [[Settings.official_up_status,
-                                  str(Settings.percentage_of_up) + '%',
-                                  Settings.number_of_up],
-                                 [Settings.official_down_status,
-                                  str(Settings.percentage_of_down) + '%',
-                                  Settings.number_of_down],
-                                 [Settings.official_invalid_status,
-                                  str(Settings.percentage_of_invalid) + '%',
-                                  Settings.number_of_invalid]]:
+                for to_print in [[STATUS['official']['up'],
+                                  str(CONFIGURATION['counter']['percentage']['up']) + '%',
+                                  CONFIGURATION['counter']['number']['up']],
+                                 [STATUS['official']['down'],
+                                  str(CONFIGURATION['counter']['percentage']['down']) + '%',
+                                  CONFIGURATION['counter']['number']['down']],
+                                 [STATUS['official']['invalid'],
+                                  str(CONFIGURATION['counter']['percentage']['invalid']) + '%',
+                                  CONFIGURATION['counter']['number']['invalid']]]:
                     Prints(
                         to_print,
                         'Percentage',
-                        Settings.output_percentage_log).data()
+                        output).data()
 
 
 class Generate(object):
     """
     Generate different sort of files.
 
-    :param domain_status: A string, the domain status.
-    :param source: A string, the source of the given status.
-    :param expiration_date: A string, the expiration date of the domain.
+    Arguments:
+        - domain_status: str
+            The domain status.
+        - source: str
+            The source of the given status.
+        - expiration_date: str
+            The expiration date of the domain if catched.
     """
 
     def __init__(self, domain_status, source=None, expiration_date=None):
         self.domain_status = domain_status
         self.source = source
         self.expiration_date = expiration_date
+
+        self.output_parent_dir = CURRENT_DIRECTORY + \
+            OUTPUTS['parent_directory']
 
         self.refer_status = ''
         self.output = ''
@@ -1503,46 +1500,58 @@ class Generate(object):
         Generate a hosts file.
         """
 
-        if Settings.generate_hosts or Settings.plain_list_domain:
+        if CONFIGURATION['generate_hosts'] or CONFIGURATION['plain_list_domain']:
             splited_destination = ''
 
-            if self.domain_status in Settings.up_status:
-                hosts_destination = Settings.output_up_host
-                plain_destination = Settings.output_up_domain
-            elif self.domain_status in Settings.down_status:
-                hosts_destination = Settings.output_down_host
-                plain_destination = Settings.output_down_domain
-            elif self.domain_status in Settings.invalid_status:
-                hosts_destination = Settings.output_invalid_host
-                plain_destination = Settings.output_invalid_domain
-            elif self.domain_status in Settings.potentialy_up_status \
-                or self.domain_status in Settings.potentially_down_status \
-                    or self.domain_status in Settings.http_active_status:
+            output_hosts = self.output_parent_dir + \
+                OUTPUTS['hosts']['directory'] + \
+                '%s' + directory_separator + OUTPUTS['hosts']['filename']
 
-                if self.domain_status in Settings.potentialy_up_status:
-                    output_dir = Settings.http_potentially_up
-                elif self.domain_status in Settings.potentially_down_status:
-                    output_dir = Settings.http_potentially_down
+            output_domains = self.output_parent_dir + \
+                OUTPUTS['domains']['directory'] + \
+                '%s' + directory_separator + OUTPUTS['domains']['filename']
+
+            if self.domain_status.lower() in STATUS['list']['up']:
+                hosts_destination = output_hosts % STATUS['official']['up']
+                plain_destination = output_domains % STATUS['official']['up']
+            elif self.domain_status.lower() in STATUS['list']['down']:
+                hosts_destination = output_hosts % STATUS['official']['down']
+                plain_destination = output_domains % STATUS['official']['down']
+            elif self.domain_status.lower() in STATUS['list']['invalid']:
+                hosts_destination = output_hosts % STATUS['official']['invalid']
+                plain_destination = output_domains % STATUS['official']['invalid']
+            elif self.domain_status.lower() in STATUS['list']['potentially_up'] \
+                or self.domain_status.lower() in STATUS['list']['potentially_down'] \
+                    or self.domain_status.lower() in STATUS['list']['http_active']:
+
+                output_dir = self.output_parent_dir + \
+                    OUTPUTS['http_analytic']['directories']['parent']
+                if self.domain_status.lower(
+                ) in STATUS['list']['potentially_up']:
+                    output_dir += OUTPUTS['http_analytic']['directories']['potentially_up']
+                elif self.domain_status.lower() in STATUS['list']['potentially_down']:
+                    output_dir += OUTPUTS['http_analytic']['directories']['potentially_down']
                 else:
-                    output_dir = Settings.http_up
+                    output_dir += OUTPUTS['http_analytic']['directories']['up']
 
-                if not output_dir.endswith(Settings.dir_separator):
-                    output_dir += Settings.dir_separator
+                if not output_dir.endswith(directory_separator):
+                    output_dir += directory_separator
 
-                hosts_destination = output_dir + Settings.hosts_default_filename
-                plain_destination = output_dir + Settings.domains_default_filename
-                splited_destination = output_dir + str(Settings.http_code)
+                hosts_destination = output_dir + OUTPUTS['hosts']['filename']
+                plain_destination = output_dir + OUTPUTS['domains']['filename']
+                splited_destination = output_dir + \
+                    str(CONFIGURATION['http_code'])
 
-            if Settings.generate_hosts:
-                Prints([Settings.custom_ip, Settings.domain],
+            if CONFIGURATION['generate_hosts']:
+                Prints([CONFIGURATION['custom_ip'], CONFIGURATION['domain']],
                        'FullHosts', hosts_destination).data()
 
-            if Settings.plain_list_domain:
-                Prints([Settings.domain], 'PlainDomain',
+            if CONFIGURATION['plain_list_domain']:
+                Prints([CONFIGURATION['domain']], 'PlainDomain',
                        plain_destination).data()
 
-            if Settings.split_files and splited_destination != '':
-                Prints([Settings.domain], 'PlainDomain',
+            if CONFIGURATION['split'] and splited_destination:
+                Prints([CONFIGURATION['domain']], 'PlainDomain',
                        splited_destination).data()
 
     def unified_file(self):
@@ -1552,59 +1561,73 @@ class Generate(object):
         misunderstanding.
         """
 
-        if Settings.unified_file:
-            if Settings.less:
-                if Settings.http_code_status:
+        if CONFIGURATION['unified']:
+            output = self.output_parent_dir + \
+                OUTPUTS['default_files']['results']
+            if CONFIGURATION['less']:
+                if HTTP_CODE['active']:
                     to_print = [
-                        Settings.domain,
+                        CONFIGURATION['domain'],
                         self.domain_status,
-                        Settings.http_code]
+                        CONFIGURATION['http_code']]
                 else:
                     to_print = [
-                        Settings.domain,
+                        CONFIGURATION['domain'],
                         self.domain_status,
                         self.source]
 
                 Prints(
                     to_print,
                     'Less',
-                    Settings.output_unified_results,
+                    output,
                     True).data()
             else:
                 to_print = [
-                    Settings.domain,
+                    CONFIGURATION['domain'],
                     self.domain_status,
                     self.expiration_date,
                     self.source,
-                    Settings.http_code,
-                    Settings.current_datetime]
+                    CONFIGURATION['http_code'],
+                    CURRENT_TIME]
 
                 Prints(
                     to_print,
                     'Generic_File',
-                    Settings.output_unified_results,
+                    output,
                     True).data()
 
-    @classmethod
-    def analytic_file(cls, new_status, old_status):
+    def _analytic_file(self, new_status, old_status):
         """
         Generate HTTP_Analytic/* files.
 
-        :param new_status: A string, the new status of the domain.
-        :param old_status: A strinf, the old status of the domain.
+        Arguments:
+            - new_status: str
+                The new status of the domain.
+            - old_status: str
+                The old status of the domain.
         """
 
-        if new_status in Settings.up_status:
-            output = Settings.output_http_up
+        output = self.output_parent_dir + \
+            OUTPUTS['http_analytic']['directories']['parent'] + '%s%s'
+        if new_status.lower() in STATUS['list']['up']:
+            output = output % (OUTPUTS['http_analytic']['directories'][
+                'up'], OUTPUTS['http_analytic']['filenames']['up'])
             Generate('HTTP_Active').hosts_file()
-        elif new_status in Settings.potentialy_up_status:
-            output = Settings.output_http_potentially_up
+        elif new_status.lower() in STATUS['list']['potentially_up']:
+            output = output % (OUTPUTS['http_analytic']['directories']['potentially_up'],
+                               OUTPUTS['http_analytic']['filenames']['potentially_up'])
             Generate('potentially_up').hosts_file()
         else:
-            output = Settings.output_http_potentially_down
+            output = output % (OUTPUTS['http_analytic']['directories']['potentially_down'],
+                               OUTPUTS['http_analytic']['filenames']['potentially_down'])
 
-        Prints([Settings.domain, old_status, Settings.http_code,
-                Settings.current_datetime], 'HTTP', output, True).data()
+        Prints([CONFIGURATION['domain'],
+                old_status,
+                CONFIGURATION['http_code'],
+                CURRENT_TIME],
+               'HTTP',
+               output,
+               True).data()
 
     def special_blogspot(self):
         """
@@ -1615,32 +1638,54 @@ class Generate(object):
         regex_blogger = ['create-blog.g?', '87065', 'doesn&#8217;t&nbsp;exist']
 
         if Helpers.Regex(
-                Settings.domain,
+                CONFIGURATION['domain'],
                 regex_blogspot,
                 return_data=False, escape=True).match():
             blogger_content_request = requests.get(
-                'http://' + Settings.domain + ':80')
-            blogger_content = blogger_content_request.text
+                'http://%s:80' % CONFIGURATION['domain'])
 
             for regx in regex_blogger:
-                if regx in blogger_content or Helpers.Regex(
-                        blogger_content, regx, return_data=False, escape=False).match():
+                if regx in blogger_content_request.text or Helpers.Regex(
+                        blogger_content_request.text,
+                        regx,
+                        return_data=False,
+                        escape=False).match():
                     self.source = 'SPECIAL'
-                    self.domain_status = Settings.official_down_status
-                    self.output = Settings.output_down_result
+                    self.domain_status = STATUS['official']['down']
+                    self.output = self.output_parent_dir + \
+                        OUTPUTS['splited']['directory'] + self.domain_status
                     break
+
+    def special_wordpress_com(self):
+        """
+        Handle the wordpress.com special case.
+        """
+
+        wordpress_com = '.wordpress.com'
+        does_not_exist = 'doesn&#8217;t&nbsp;exist'
+
+        if CONFIGURATION['domain'].endswith(wordpress_com):
+            wordpress_com_content = requests.get(
+                'http://%s:80' % CONFIGURATION['domain'])
+
+            if does_not_exist in wordpress_com_content.text:
+                self.source = 'SPECIAL'
+                self.domain_status = STATUS['official']['down']
+                self.output = self.output_parent_dir + \
+                    OUTPUTS['splited']['directory'] + self.domain_status
 
     def up_status_file(self):
         """
         Logic behind the up status when generating the status file.
         """
 
-        if self.expiration_date in [None, '', False]:
+        if not self.expiration_date:
             self.expiration_date = 'Unknown'
 
-        if Settings.http_code_status and Settings.http_code in Settings.down_potentially_codes:
-            self.analytic_file(
-                Settings.official_down_status,
+        if HTTP_CODE['active'] \
+                and CONFIGURATION['http_code'] in HTTP_CODE['list']['potentially_down']:
+            self._analytic_file(
+                STATUS['official']['down'],
                 self.domain_status)
 
             regex_to_match = [
@@ -1653,21 +1698,25 @@ class Generate(object):
 
             for regx in regex_to_match:
                 if Helpers.Regex(
-                        Settings.domain,
+                        CONFIGURATION['domain'],
                         regx,
                         return_data=False,
                         escape=True).match():
                     self.source = 'SPECIAL'
-                    self.domain_status = Settings.official_down_status
-                    self.output = Settings.output_down_result
+                    self.domain_status = STATUS['official']['down']
+                    self.output = self.output_parent_dir + \
+                        OUTPUTS['splited']['directory'] + self.domain_status
 
             self.special_blogspot()
-        elif Settings.http_code_status and Settings.http_code in Settings.potentially_up_codes:
+        elif HTTP_CODE['active'] \
+                and CONFIGURATION['http_code'] in HTTP_CODE['list']['potentially_up']:
             self.special_blogspot()
+            self.special_wordpress_com()
 
         if self.source != 'SPECIAL':
-            self.domain_status = Settings.official_up_status
-            self.output = Settings.output_up_result
+            self.domain_status = STATUS['official']['up']
+            self.output = self.output_parent_dir + \
+                OUTPUTS['splited']['directory'] + self.domain_status
 
     def down_status_file(self):
         """
@@ -1677,19 +1726,30 @@ class Generate(object):
         self.refer_status = 'Not Found'
         self.expiration_date = 'Unknown'
 
-        if Settings.http_code_status:
-            if Settings.http_code in Settings.active_http_codes:
-                self.analytic_file(
-                    Settings.official_up_status, self.domain_status)
+        if HTTP_CODE['active']:
+            if CONFIGURATION['http_code'] in HTTP_CODE['list']['up']:
+                self._analytic_file(
+                    STATUS['official']['up'], self.domain_status)
                 self.source = 'HTTP Code'
-                self.domain_status = Settings.official_up_status
-                self.output = Settings.output_up_result
-            elif Settings.http_code in Settings.potentially_up_codes:
-                self.analytic_file('potentially_up', self.domain_status)
+                self.domain_status = STATUS['official']['up']
+                self.output = self.output_parent_dir + \
+                    OUTPUTS['splited']['directory'] + self.domain_status
+            elif CONFIGURATION['http_code'] in HTTP_CODE['list']['potentially_up']:
+                self._analytic_file('potentially_up', self.domain_status)
 
-        if self.source != 'HTTP Code':
-            self.domain_status = Settings.official_down_status
-            self.output = Settings.output_down_result
+        if Helpers.Regex(
+                CONFIGURATION['domain'],
+                r'^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[0-9]{1,}\/[0-9]{1,})$',  # pylint: disable=line-too-long
+                return_data=False).match():
+            self.source = 'SPECIAL'
+            self.domain_status = STATUS['official']['up']
+            self.output = self.output_parent_dir + \
+                OUTPUTS['splited']['directory'] + self.domain_status
+
+        if self.source != 'HTTP Code' and self.source != 'SPECIAL':
+            self.domain_status = STATUS['official']['down']
+            self.output = self.output_parent_dir + \
+                OUTPUTS['splited']['directory'] + self.domain_status
 
     def invalid_status_file(self):
         """
@@ -1698,59 +1758,64 @@ class Generate(object):
 
         self.expiration_date = 'Unknown'
 
-        if Settings.http_code_status:
-            if Settings.http_code in Settings.active_http_codes:
-                self.analytic_file(
-                    Settings.official_up_status, self.domain_status)
-                self.source = 'HTTP Code'
-                self.domain_status = Settings.official_up_status
-                self.output = Settings.output_up_result
-            elif Settings.http_code in Settings.potentially_up_codes:
-                self.analytic_file(
-                    'potentially_up', self.domain_status)
-            elif Settings.http_code in Settings.down_potentially_codes:
-                self.analytic_file(
-                    Settings.official_down_status, self.domain_status)
+        if HTTP_CODE['active']:
+            try:
+                if CONFIGURATION['http_code'] in HTTP_CODE['list']['up']:
+                    self._analytic_file(
+                        STATUS['official']['up'], self.domain_status)
+                    self.source = 'HTTP Code'
+                    self.domain_status = STATUS['official']['up']
+                    self.output = self.output_parent_dir + \
+                        OUTPUTS['splited']['directory'] + self.domain_status
+                elif CONFIGURATION['http_code'] in HTTP_CODE['list']['potentially_up']:
+                    self._analytic_file(
+                        'potentially_up', self.domain_status)
+                elif CONFIGURATION['http_code'] in HTTP_CODE['list']['potentially_down']:
+                    self._analytic_file(
+                        STATUS['official']['down'], self.domain_status)
+            except KeyError:
+                pass
 
             if self.source != 'HTTP Code':
-                self.domain_status = Settings.official_invalid_status
-                self.output = Settings.output_invalid_result
+                self.domain_status = STATUS['official']['invalid']
+                self.output = self.output_parent_dir + \
+                    OUTPUTS['splited']['directory'] + self.domain_status
 
-    def prints_status_file(self):
+    def _prints_status_file(self):
         """
         Logic behind the printing when generating status file.
         """
 
-        if Settings.less:
-            Prints([Settings.domain, self.domain_status,
+        if CONFIGURATION['less']:
+            Prints([CONFIGURATION['domain'], self.domain_status,
                     self.source], 'Less', self.output, True).data()
         else:
-            if not Settings.split_files:
-                if self.domain_status in Settings.up_status:
-                    Prints([Settings.domain,
+            if not CONFIGURATION['split']:
+                if self.domain_status.lower() in STATUS['list']['up']:
+                    Prints([CONFIGURATION['domain'],
                             self.expiration_date,
                             self.source,
-                            Settings.http_code,
-                            Settings.current_datetime],
-                           Settings.official_up_status,
+                            CONFIGURATION['http_code'],
+                            CURRENT_TIME],
+                           STATUS['official']['up'],
                            self.output,
                            True).data()
-                elif self.domain_status in Settings.down_status:
-                    Prints([Settings.domain,
-                            Settings.referer,
+                elif self.domain_status.lower() in STATUS['list']['down']:
+                    Prints([CONFIGURATION['domain'],
+                            CONFIGURATION['referer'],
                             self.domain_status,
                             self.source,
-                            Settings.http_code,
-                            Settings.current_datetime],
-                           Settings.official_down_status,
+                            CONFIGURATION['http_code'],
+                            CURRENT_TIME],
+                           STATUS['official']['down'],
                            self.output,
                            True).data()
-                elif self.domain_status in Settings.invalid_status:
-                    Prints([Settings.domain,
+                elif self.domain_status.lower() in STATUS['list']['invalid']:
+                    Prints([CONFIGURATION['domain'],
                             self.source,
-                            Settings.http_code,
-                            Settings.current_datetime],
-                           Settings.official_invalid_status,
+                            CONFIGURATION['http_code'],
+                            CURRENT_TIME],
+                           STATUS['official']['invalid'],
                            self.output,
                            True).data()
 
@@ -1759,11 +1824,16 @@ class Generate(object):
         Generate a file according to the domain status.
         """
 
-        if self.domain_status in Settings.up_status:
+        try:
+            CONFIGURATION['http_code']
+        except KeyError:
+            CONFIGURATION['http_code'] = '*' * 3
+
+        if self.domain_status.lower() in STATUS['list']['up']:
             self.up_status_file()
-        elif self.domain_status in Settings.down_status:
+        elif self.domain_status.lower() in STATUS['list']['down']:
             self.down_status_file()
-        elif self.domain_status in Settings.invalid_status:
+        elif self.domain_status.lower() in STATUS['list']['invalid']:
             self.invalid_status_file()
 
         Generate(
@@ -1772,22 +1842,22 @@ class Generate(object):
             self.expiration_date).hosts_file()
         Percentage(self.domain_status).count()
 
-        if not Settings.quiet:
-            if Settings.less:
-                Prints([Settings.domain,
+        if not CONFIGURATION['quiet']:
+            if CONFIGURATION['less']:
+                Prints([CONFIGURATION['domain'],
                         self.domain_status,
-                        Settings.http_code],
+                        CONFIGURATION['http_code']],
                        'Less').data()
             else:
-                Prints([Settings.domain,
+                Prints([CONFIGURATION['domain'],
                         self.domain_status,
                         self.expiration_date,
                         self.source,
-                        Settings.http_code],
+                        CONFIGURATION['http_code']],
                        'Generic').data()
 
-        if not Settings.no_files and Settings.split_files:
-            self.prints_status_file()
+        if not CONFIGURATION['no_files'] and CONFIGURATION['split']:
+            self._prints_status_file()
         else:
             self.unified_file()
 
@@ -1797,7 +1867,9 @@ class Status(object):  # pylint: disable=too-few-public-methods
     Return the domain status in case we don't use WHOIS or in case that WHOIS
     record is not readable.
 
-    :param matched_status: A string, the previously catched status.
+    Argument:
+        - matched_result: str
+            The previously catched status.
     """
 
     def __init__(self, matched_status):
@@ -1806,18 +1878,21 @@ class Status(object):  # pylint: disable=too-few-public-methods
     def handle(self):
         """
         Handle the lack of WHOIS. :)
+
+        Returns: str
+            The status of the domains after generating the files.
         """
 
         source = 'NSLOOKUP'
 
-        if self.matched_status not in Settings.invalid_status:
+        if self.matched_status.lower() not in STATUS['list']['invalid']:
             if Lookup().nslookup():
-                Generate(Settings.official_up_status, source).status_file()
-                return Settings.official_up_status
-            Generate(Settings.official_down_status, source).status_file()
-            return Settings.official_down_status
-        Generate(Settings.official_invalid_status, 'IANA').status_file()
-        return Settings.official_invalid_status
+                Generate(STATUS['official']['up'], source).status_file()
+                return STATUS['official']['up']
+            Generate(STATUS['official']['down'], source).status_file()
+            return STATUS['official']['down']
+        Generate(STATUS['official']['invalid'], 'IANA').status_file()
+        return STATUS['official']['invalid']
 
 
 class Referer(object):
@@ -1827,7 +1902,7 @@ class Referer(object):
     """
 
     def __init__(self):
-        self.domain_extension = Settings.domain[Settings.domain.rindex(
+        self.domain_extension = CONFIGURATION['domain'][CONFIGURATION['domain'].rindex(
             '.') + 1:]
 
         self.ignored_extension = [
@@ -1863,9 +1938,11 @@ class Referer(object):
             'gp',
             'gr',
             'gt',
+            'jm',
             'jo',
             'kh',
             'lb',
+            'mc',
             'mil',
             'mm',
             'mt',
@@ -1876,6 +1953,7 @@ class Referer(object):
             'np',
             'nr',
             'pa',
+            'pg',
             'ph',
             'pk',
             'pn',
@@ -1895,12 +1973,12 @@ class Referer(object):
         ]
 
     @classmethod
-    def iana_database(cls):
+    def _iana_database(cls):
         """
         Convert `iana-domains-db.json` into a dictionnary.
         """
 
-        file_to_read = Settings.current_dir + 'iana-domains-db.json'
+        file_to_read = CURRENT_DIRECTORY + OUTPUTS['default_files']['iana']
 
         return Helpers.Dict().from_json(Helpers.File(file_to_read).read())
 
@@ -1909,23 +1987,23 @@ class Referer(object):
         Return the referer aka the WHOIS server of the current domain extension.
         """
 
-        if not Settings.no_whois:
+        if not CONFIGURATION['no_whois']:
             if self.domain_extension not in self.ignored_extension:
                 referer = None
 
-                if Settings.iana_db == {}:
-                    Settings.iana_db.update(self.iana_database())
+                if CONFIGURATION['iana_db'] == {}:
+                    CONFIGURATION['iana_db'].update(self._iana_database())
 
-                if self.domain_extension in Settings.iana_db:
-                    referer = Settings.iana_db[self.domain_extension]
+                if self.domain_extension in CONFIGURATION['iana_db']:
+                    referer = CONFIGURATION['iana_db'][self.domain_extension]
 
                     if referer is None:
                         self.log()
                         return Status(
-                            Settings.official_down_status).handle()
+                            STATUS['official']['down']).handle()
                     return referer
-                return Status(Settings.official_invalid_status).handle()
-            return Status(Settings.official_down_status).handle()
+                return Status(STATUS['official']['invalid']).handle()
+            return Status(STATUS['official']['down']).handle()
         return None
 
     def log(self):
@@ -1933,22 +2011,25 @@ class Referer(object):
         Log if no referer is found for a domain extension.
         """
 
-        if Settings.logs:
+        if CONFIGURATION['logs']:
             logs = '=' * 100
             logs += '\nNo referer found for: %s domains\n' % self.domain_extension
             logs += '=' * 100
             logs += '\n'
 
             Helpers.File(
-                Settings.no_referer_logs_dir +
+                CURRENT_DIRECTORY +
+                OUTPUTS['parent_directory'] +
+                OUTPUTS['logs']['directories']['parent'] +
+                OUTPUTS['logs']['directories']['no_referer'] +
                 self.domain_extension).write(logs)
 
-            if Settings.share_logs:
+            if CONFIGURATION['share_logs']:
                 data_to_share = {
                     'extension': self.domain_extension
                 }
 
-                requests.post(Settings.link_api_no_referer, data=data_to_share)
+                requests.post(LINKS['api_no_referer'], data=data_to_share)
 
 
 class ExpirationDate(object):
@@ -1963,22 +2044,36 @@ class ExpirationDate(object):
         self.whois_record = ''
 
     @classmethod
-    def is_domain_valid(cls):
+    def is_domain_valid(cls, domain=None):
         """
-        Check if Settings.domain is a valid domain.
+        Check if CONFIGURATION['domain'] is a valid domain.
+
+        Argument:
+            - domain: str
+                The domain to test
+
         """
 
         regex_valid_domains = r'^(?=.{0,253}$)(([a-z0-9][a-z0-9-]{0,61}[a-z0-9]|[a-z0-9])\.)+((?=.*[^0-9])([a-z0-9][a-z0-9-]{0,61}[a-z0-9]|[a-z0-9]))$'  # pylint: disable=line-too-long
 
+        if domain:
+            to_test = domain
+        else:
+            to_test = CONFIGURATION['domain']
+
         return Helpers.Regex(
-            Settings.domain,
+            to_test,
             regex_valid_domains,
             return_data=False).match()
 
     @classmethod
-    def is_valid_ip(cls):
+    def is_ip_valid(cls, IP=None):
         """
-        Check if Settings.domain is a valid IPv4.
+        Check if CONFIGURATION['domain'] is a valid IPv4.
+
+        Argument:
+            - IP: str
+                The ip to test
 
         Note:
             We only test IPv4 because for now we only support domain and IPv4.
@@ -1986,8 +2081,13 @@ class ExpirationDate(object):
 
         regex_ipv4 = r'^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'  # pylint: disable=line-too-long
 
+        if IP:
+            to_test = IP
+        else:
+            to_test = CONFIGURATION['domain']
+
         return Helpers.Regex(
-            Settings.domain,
+            to_test,
             regex_ipv4,
             return_data=False).match()
 
@@ -1997,39 +2097,51 @@ class ExpirationDate(object):
         """
 
         domain_validation = self.is_domain_valid()
-        ip_validation = self.is_valid_ip()
+        ip_validation = self.is_ip_valid()
 
         if domain_validation and not ip_validation or domain_validation:
-            Settings.http_code = HTTPCode().get()
-            Settings.referer = Referer().get()
+            CONFIGURATION.update({
+                'http_code': HTTPCode().get(),
+                'referer': Referer().get()
+            })
 
-            if Settings.referer in [
-                    Settings.official_up_status,
-                    Settings.official_down_status,
-                    Settings.official_invalid_status]:
-                return Settings.referer
-            elif Settings.referer is not None:
-                return self.extract()
+            if CONFIGURATION['referer'] in [
+                    STATUS['official']['up'],
+                    STATUS['official']['down'],
+                    STATUS['official']['invalid']]:
+                return CONFIGURATION['referer']
+            elif CONFIGURATION['referer']:
+                return self._extract()
 
-            return Status(Settings.official_down_status).handle()
+            self._whois_log()
+            return Status(STATUS['official']['down']).handle()
         elif ip_validation and not domain_validation or ip_validation:
-            Settings.http_code = HTTPCode().get()
-            return Status(Settings.official_down_status).handle()
+            CONFIGURATION['http_code'] = HTTPCode().get()
 
-        return Status(Settings.official_invalid_status).handle()
+            self._whois_log()
+            return Status(STATUS['official']['down']).handle()
 
-    def whois_log(self):
+        self._whois_log()
+        return Status(STATUS['official']['invalid']).handle()
+
+    def _whois_log(self):
         """
         Log the whois record into a file
         """
 
-        if Settings.debug and Settings.logs:
-            log = self.log_separator + self.whois_record + '\n' + self.log_separator
+        if CONFIGURATION['debug'] and CONFIGURATION['logs']:
+            log = self.log_separator + \
+                str(self.whois_record) + '\n' + self.log_separator
 
-            Helpers.File(Settings.whois_logs_dir + Settings.referer).write(log)
+            Helpers.File(
+                CURRENT_DIRECTORY +
+                OUTPUTS['parent_directory'] +
+                OUTPUTS['logs']['directories']['parent'] +
+                OUTPUTS['logs']['directories']['whois'] +
+                CONFIGURATION['referer']).write(log)
 
     @classmethod
-    def convert_1_to_2_digits(cls, number):
+    def _convert_1_to_2_digits(cls, number):
         """
         Convert 1 digit number to two digits.
         """
@@ -2037,11 +2149,16 @@ class ExpirationDate(object):
         return str(number).zfill(2)
 
     @classmethod
-    def convert_or_shorten_month(cls, data):
+    def _convert_or_shorten_month(cls, data):
         """
         Convert a given month into our unified format.
 
-        :param data: A string, The month to convert or shorten.
+        Argument:
+            - data: str
+                The month to convert or shorten.
+
+        Returns: str
+            The unified month name.
         """
 
         short_month = {
@@ -2070,27 +2187,30 @@ class ExpirationDate(object):
         Log the extracted expiration date and domain into a file.
         """
 
-        if Settings.logs:
+        if CONFIGURATION['logs']:
             log = self.log_separator + 'Expiration Date: %s \n' % self.expiration_date
-            log += 'Tested domain: %s \n' % Settings.domain
+            log += 'Tested domain: %s \n' % CONFIGURATION['domain']
 
             Helpers.File(
-                Settings.date_format_logs_dir +
-                Settings.referer).write(log)
+                CURRENT_DIRECTORY +
+                OUTPUTS['parent_directory'] +
+                OUTPUTS['logs']['directories']['parent'] +
+                OUTPUTS['logs']['directories']['date_format'] +
+                CONFIGURATION['referer']).write(log)
 
-            if Settings.share_logs:
+            if CONFIGURATION['share_logs']:
                 date_to_share = {
-                    'domain': Settings.domain,
+                    'domain': CONFIGURATION['domain'],
                     'expiration_date': self.expiration_date,
-                    'whois_server': Settings.referer
+                    'whois_server': CONFIGURATION['referer']
                 }
 
                 requests.post(
-                    Settings.link_api_date_format,
+                    LINKS['api_date_format'],
                     data=date_to_share)
 
     @classmethod
-    def cases_management(cls, regex_number, matched_result):
+    def _cases_management(cls, regex_number, matched_result):
         """
         A little helper of self.format. (Avoiding of nested loops)
 
@@ -2098,6 +2218,10 @@ class ExpirationDate(object):
             Please note that the second value of the case represent the groups
             in order [day,month,year]. This means that a [2,1,0] will be for
             example for a date in format `2017-01-02` where `01` is the month.
+
+        Retuns: list or None
+            - None: the case is unknown.
+            - list: the list representing the date [day, month, year]
         """
 
         cases = {
@@ -2118,7 +2242,7 @@ class ExpirationDate(object):
                 continue
         return None
 
-    def format(self):
+    def _format(self):
         """
         Format the expiration date into an unified format (01-jan-1970).
         """
@@ -2209,29 +2333,29 @@ class ExpirationDate(object):
                 rematch=True).match()
 
             if matched_result:
-                date = self.cases_management(regx, matched_result)
+                date = self._cases_management(regx, matched_result)
 
-                if date is not None:
-                    day = self.convert_1_to_2_digits(date[0])
-                    month = self.convert_or_shorten_month(date[1])
+                if date:
+                    day = self._convert_1_to_2_digits(date[0])
+                    month = self._convert_or_shorten_month(date[1])
                     year = str(date[2])
 
                     self.expiration_date = day + '-' + month + '-' + year
                 break
 
-        if self.expiration_date != '' and Helpers.Regex(
+        if self.expiration_date and not Helpers.Regex(
                 self.expiration_date,
                 r'[0-9]{2}\-[a-z]{3}\-2[0-9]{3}',
-                return_data=False).match() != True:
+                return_data=False).match():
             self.log()
-            self.whois_log()
+            self._whois_log()
 
-    def extract(self):
+    def _extract(self):
         """
         Extract the expiration date from the whois record.
         """
 
-        self.whois_record = Lookup().whois(Settings.referer)
+        self.whois_record = Lookup().whois(CONFIGURATION['referer'])
 
         to_match = [
             r'expire:(.*)',
@@ -2270,7 +2394,7 @@ class ExpirationDate(object):
             r'Expired:(.*)',
             r'Date d\'expiration:(.*)']
 
-        if self.whois_record is not None:
+        if self.whois_record:
             for string in to_match:
                 expiration_date = Helpers.Regex(
                     self.whois_record,
@@ -2279,7 +2403,7 @@ class ExpirationDate(object):
                     rematch=True,
                     group=0).match()
 
-                if expiration_date != []:
+                if expiration_date:
                     self.expiration_date = expiration_date[0].strip()
 
                     regex_rumbers = r'[0-9]'
@@ -2288,16 +2412,545 @@ class ExpirationDate(object):
                             regex_rumbers,
                             return_data=False).match():
 
-                        self.format()
-                        Generate(Settings.official_up_status, 'WHOIS',
+                        self._format()
+                        Generate(STATUS['official']['up'], 'WHOIS',
                                  self.expiration_date).status_file()
-                        return Settings.official_up_status
 
-                    self.whois_log()
-                    return Status(Settings.official_down_status).handle()
+                        self._whois_log()
+                        return STATUS['official']['up']
 
-        self.whois_log()
-        return Status(Settings.official_down_status).handle()
+                    self._whois_log()
+                    return Status(STATUS['official']['down']).handle()
+
+        self._whois_log()
+        return Status(STATUS['official']['down']).handle()
+
+
+class IANA(object):
+    """
+    Logic behind the update of `iana-domains-db.json`
+    """
+
+    def __init__(self):
+        if not CONFIGURATION['quiet']:
+            print('Update of iana-domains-db', end=" ")
+
+        self.destination = OUTPUTS['default_files']['iana']
+        self.iana_db = {}
+
+        self.update()
+
+    @classmethod
+    def data(cls):
+        """
+        Get the database from IANA website.
+        """
+        iana_url = 'https://www.iana.org/domains/root/db'
+
+        req = requests.get(iana_url)
+
+        return req.text
+
+    @classmethod
+    def referer(cls, extension):
+        """
+        Return the referer for the given extension.
+
+        :pram extension: A string, a valid domain extension.
+        """
+
+        manual_server = {
+            'aaa': 'whois.nic.aaa',
+            'abb': 'whois.nic.abb',
+            'able': 'whois.nic.able',
+            'accenture': 'whois.nic.accenture',
+            'aetna': 'whois.nic.aetna',
+            'aig': 'whois.nic.aig',
+            'americanexpress': 'whois.nic.americanexpress',
+            'amex': 'whois.nic.amex',
+            'amica': 'whois.nic.amica',
+            'amsterdam': 'whois.nic.amsterdam',
+            'analytics': 'whois.nic.analytics',
+            'aramco': 'whois.nic.aramco',
+            'athleta': 'whois.nic.athleta',
+            'audible': 'whois.nic.audible',
+            'author': 'whois.nic.author',
+            'aws': 'whois.nic.aws',
+            'axa': 'whois.nic.axa',
+            'azure': 'whois.nic.azure',
+            'baby': 'whois.nic.baby',
+            'banamex': 'whois.nic.banamex',
+            'bananarepublic': 'whois.nic.bananarepublic',
+            'baseball': 'whois.nic.baseball',
+            'bharti': 'whois.nic.bharti',
+            'bing': 'whois.nic.bing',
+            'bloomberg': 'whois.nic.bloomberg',
+            'bm': 'whois.afilias-srs.net',
+            'book': 'whois.nic.book',
+            'booking': 'whois.nic.booking',
+            'bot': 'whois.nic.bot',
+            'bz': 'whois.afilias-grs.net',
+            'buzz': 'whois.nic.buzz',
+            'call': 'whois.nic.call',
+            'calvinklein': 'whois.nic.calvinklein',
+            'caravan': 'whois.nic.caravan',
+            'cartier': 'whois.nic.cartier',
+            'cbn': 'whois.nic.cbn',
+            'cbre': 'whois.nic.cbre',
+            'cd': 'chois.nic.cd',
+            'chase': 'whois.nic.chase',
+            'circle': 'whois.nic.circle',
+            'cisco': 'whois.nic.cisco',
+            'citadel': 'whois.nic.citadel',
+            'citi': 'whois.nic.citi',
+            'citic': 'whois.nic.citic',
+            'cm': 'whois.netcom.cm',
+            'coupon': 'whois.nic.coupon',
+            'crown': 'whois.nic.crown',
+            'crs': 'whois.nic.crs',
+            'fj': 'whois.usp.ac.fj',
+            'ga': 'whois.my.ga',
+            'gh': 'whois.nic.gh',
+            'int': 'whois.iana.org',
+            'kw': 'whois.nic.kw',
+            'lc': 'whois2.afilias-grs.net',
+            'lk': 'whois.nic.lk',
+            'microsoft': 'whois.nic.microsoft',
+            'nagoya': 'whois.nic.nagoya',
+            'nyc': 'whois.nic.nyc',
+            'ps': 'whois.pnina.ps',
+            'ren': 'whois.nic.ren',
+            'rw': 'whois.ricta.org.rw',
+            'shop': 'whois.nic.shop',
+            'sl': 'whois.nic.sl',
+            'stream': 'whois.nic.stream',
+            'tokyo': 'whois.nic.tokyo',
+            'uno': 'whois.nic.uno',
+            'za': 'whois.registry.net.za'
+        }
+
+        if extension in manual_server:
+            return manual_server[extension]
+        else:
+            whois_record = Lookup().whois(
+                CONFIGURATION['iana_whois_server'], 'hello.' + extension, 10)
+
+            if whois_record:
+                regex_referer = r'(refer:)\s+(.*)'
+
+                matched = Helpers.Regex(
+                    whois_record,
+                    regex_referer,
+                    return_data=True,
+                    rematch=True).match()
+
+                if matched:
+                    return matched[1]
+            return None
+
+    def _extensions(self, line):
+        """
+        Extract the extention from the given line.
+        Plus get its referer.
+
+        Argument:
+            - line: str
+                The line from self.iana_url.
+        """
+
+        regex_valid_extension = r'(/domains/root/db/)(.*)(\.html)'
+
+        if '/domains/root/db/' in line:
+            matched = Helpers.Regex(
+                line,
+                regex_valid_extension,
+                return_data=True,
+                rematch=True).match()[1]
+
+            if matched:
+                self.iana_db.update({
+                    matched: self.referer(matched)
+                })
+
+    def update(self):
+        """
+        Update the content of the `iana-domains-db` file.
+        """
+
+        list(map(self._extensions, self.data().split('\n')))
+        Helpers.Dict(self.iana_db).to_json(self.destination)
+
+        if not CONFIGURATION['quiet']:
+            print(CONFIGURATION['done'])
+
+
+class DirectoryStructure(object):
+    """
+    Consider this class as a backup/reconstructor of desired directory.
+    (By default, the output direcctory)
+    """
+
+    def __init__(self, production=False):
+        if OUTPUTS['main']:
+            self.base = OUTPUTS['main']
+        else:
+            self.base = CURRENT_DIRECTORY
+
+        if not self.base.endswith(directory_separator):
+            self.base += directory_separator
+
+        self.structure = self.base + OUTPUTS['default_files']['dir_structure']
+
+        if production:
+            self.backup()
+        else:
+            self.restore()
+
+    @classmethod
+    def backup(cls):
+        """
+        Backup the developer state of `output/` in order to make it restorable
+            and portable for user.
+        """
+
+        output_path = CURRENT_DIRECTORY + OUTPUTS['parent_directory']
+        result = {OUTPUTS['parent_directory']: {}}
+
+        for root, _, files in walk(output_path):
+            directories = root.split(output_path)[1]
+
+            local_result = result[OUTPUTS['parent_directory']]
+
+            for file in files:
+                file_path = root + directory_separator + file
+                file_hash = Helpers.Hash(file_path, 'sha512', True).get()
+
+                lines_in_list = [line.rstrip('\n') for line in open(file_path)]
+
+                formated_content = '@@@'.join(lines_in_list)
+
+                local_result = local_result.setdefault(
+                    directories, {file: {'sha512': file_hash, 'content': formated_content}})
+
+        Helpers.Dict(result).to_json(
+            CURRENT_DIRECTORY +
+            'dir_structure_production.json')
+
+    def _restore_replace(self):
+        """
+        Check if we need to replace ".gitignore" to ".keep".
+        """
+
+        if path.isdir(self.base + '.git'):
+            if 'PyFunceble' not in  \
+                    Helpers.Command('git remote show origin').execute():
+                return True
+            return False
+        return True
+
+    def _update_structure_from_config(self, structure):
+        """
+        This method update the paths according to configs.
+
+        Argument:
+            - structure: dict
+                The readed structure.
+        """
+
+        to_replace_base = {
+            'output/': OUTPUTS['parent_directory']
+        }
+
+        # pylint: disable=line-too-long
+        to_replace = {
+            'HTTP_Analytic': OUTPUTS['http_analytic']['directories']['parent'],
+            'HTTP_Analytic/ACTIVE': OUTPUTS['http_analytic']['directories']['parent'] + OUTPUTS['http_analytic']['directories']['up'],
+            'HTTP_Analytic/POTENTIALLY_ACTIVE': OUTPUTS['http_analytic']['directories']['parent'] + OUTPUTS['http_analytic']['directories']['potentially_up'],
+            'HTTP_Analytic/POTENTIALLY_INACTIVE': OUTPUTS['http_analytic']['directories']['parent'] + OUTPUTS['http_analytic']['directories']['potentially_down'],
+            'domains': OUTPUTS['domains']['directory'],
+            'domains/ACTIVE': OUTPUTS['domains']['directory'] + STATUS['official']['up'] + directory_separator,
+            'domains/INACTIVE': OUTPUTS['domains']['directory'] + STATUS['official']['down'] + directory_separator,
+            'domains/INVALID': OUTPUTS['domains']['directory'] + STATUS['official']['invalid'] + directory_separator,
+            'hosts': OUTPUTS['hosts']['directory'],
+            'hosts/ACTIVE': OUTPUTS['hosts']['directory'] + STATUS['official']['up'] + directory_separator,
+            'hosts/INACTIVE': OUTPUTS['hosts']['directory'] + STATUS['official']['down'] + directory_separator,
+            'hosts/INVALID': OUTPUTS['hosts']['directory'] + STATUS['official']['invalid'] + directory_separator,
+            'logs': OUTPUTS['logs']['directories']['parent'],
+            'logs/date_format': OUTPUTS['logs']['directories']['parent'] + OUTPUTS['logs']['directories']['date_format'],
+            'logs/no_referer': OUTPUTS['logs']['directories']['parent'] + OUTPUTS['logs']['directories']['no_referer'],
+            'logs/percentage': OUTPUTS['logs']['directories']['parent'] + OUTPUTS['logs']['directories']['percentage'],
+            'logs/whois': OUTPUTS['logs']['directories']['parent'] + OUTPUTS['logs']['directories']['whois'],
+            'splited': OUTPUTS['splited']['directory'],
+        }
+        # pylint: enable=line-too-long
+
+        structure = Helpers.Dict(structure).rename_key(to_replace_base)
+        structure[OUTPUTS['parent_directory']] = Helpers.Dict(
+            structure[OUTPUTS['parent_directory']]).rename_key(to_replace)
+
+        try:
+            Helpers.Dict(structure).to_json(self.structure)
+        except FileNotFoundError:
+            mkdir(
+                directory_separator.join(
+                    self.structure.split(directory_separator)[
+                        :-1]))
+            Helpers.Dict(structure).to_json(self.structure)
+
+        return structure
+
+    def _get_structure(self):
+        """
+        This method return the structure we are goinng to work with.
+        """
+
+        structure_file = ''
+        req = ''
+
+        if path.isfile(self.structure):
+            structure_file = self.structure
+        elif path.isfile(self.base + 'dir_structure_production.json'):
+            structure_file = self.base + 'dir_structure_production.json'
+        else:
+            try:
+                if CONFIGURATION['stable']:
+                    req = requests.get(LINKS['dir_structure'])
+            except KeyError:
+                req = requests.get(
+                    LINKS['dir_structure'].replace(
+                        'master', 'dev'))
+
+        if structure_file.endswith('_production.json'):
+            structure = Helpers.Dict().from_json(Helpers.File(structure_file).read())
+
+            return self._update_structure_from_config(structure)
+        elif structure_file.endswith('.json'):
+            return Helpers.Dict().from_json(Helpers.File(structure_file).read())
+
+        return self._update_structure_from_config(
+            Helpers.Dict().from_json(req.text))
+
+    @classmethod
+    def _create_directory(cls, directory):
+        """
+        This function create the given directory if it does not exists.
+        """
+
+        if not path.isdir(directory):
+            AutoSave.travis_permissions()
+            mkdir(directory)
+            AutoSave.travis_permissions()
+
+    def restore(self):
+        """
+        Restore the 'output/' directory structure based on the `dir_structure.json` file.
+        """
+
+        structure = self._get_structure()
+
+        list_of_key = list(structure.keys())
+        structure = structure[list_of_key[0]]
+        parent_path = list_of_key[0] + directory_separator
+
+        for directory in structure:
+            base = self.base + parent_path + directory + directory_separator
+
+            self._create_directory(base)
+
+            for file in structure[directory]:
+                file_path = base + file
+
+                content_to_write = structure[directory][file]['content']
+                online_sha = structure[directory][file]['sha512']
+
+                content_to_write = Helpers.Regex(
+                    content_to_write, '@@@', escape=True, replace_with='\\n').replace()
+
+                git_to_keep = file_path.replace('gitignore', 'keep')
+                keep_to_git = file_path.replace('keep', 'gitignore')
+
+                if self._restore_replace():
+                    if path.isfile(file_path) and Helpers.Hash(
+                            file_path, 'sha512', True).get() == online_sha:
+                        rename(file_path, git_to_keep)
+                        write = False
+                    else:
+                        Helpers.File(file_path).delete()
+                        file_path = git_to_keep
+                        write = True
+                else:
+                    if path.isfile(keep_to_git) and Helpers.Hash(
+                            file_path, 'sha512', True).get() == online_sha:
+                        rename(file_path, keep_to_git)
+                        write = False
+                    else:
+                        Helpers.File(keep_to_git).delete()
+                        file_path = keep_to_git
+                        write = True
+
+                if write:
+                    Helpers.File(file_path).write(
+                        content_to_write + '\n', True)
+
+
+class Update(object):
+    """
+    Update logic
+    """
+
+    def __init__(self, path_update=False):
+        self.destination = CURRENT_DIRECTORY + 'funilrys.'
+        self.files = {
+            'script': 'PyFunceble.py',
+            'iana': OUTPUTS['default_files']['iana'],
+            'dir_structure': 'dir_structure_production.json',
+            'config': 'config_production.yaml',
+            'requirements': 'requirements.txt'
+        }
+
+        self.path_update = path_update
+
+        if self.path_update:
+            self.files = Helpers.Dict(self.files).remove_key(
+                ['script', 'requirements'])
+
+        if path.isdir(
+                CURRENT_DIRECTORY +
+                '.git') and 'PyFunceble' in Helpers.Command('git remote show origin').execute():
+            self.git()
+        else:
+            if not self.same_version(True):
+                for data in self.files:
+                    Helpers.File(CURRENT_DIRECTORY + self.files[data]).delete()
+                    rename(
+                        self.destination +
+                        self.files[data],
+                        CURRENT_DIRECTORY +
+                        self.files[data])
+
+                if not CONFIGURATION['quiet']:
+                    print('Checking version', end=' ')
+                if self.same_version() and not CONFIGURATION['quiet']:
+                    print(
+                        CONFIGURATION['done'] +
+                        '\n\nThe update was successfully completed!')
+                else:
+                    if not CONFIGURATION['quiet']:
+                        print(
+                            CONFIGURATION['error'] +
+                            '\nImpossible to update PyFunceble. Please report issue.')
+            else:
+                if not CONFIGURATION['quiet']:
+                    print('No need to update.\n')
+
+                for data in self.files:
+                    Helpers.File(self.destination + self.files[data]).delete()
+
+    @classmethod
+    def git(cls):
+        """
+        Update repository if cloned (git).
+        """
+
+        if CONFIGURATION['stable']:
+            Helpers.Command('git checkout master && git stash').execute()
+        else:
+            Helpers.Command('git checkout dev && git stash').execute()
+
+        print(Helpers.Command('git pull').execute())
+
+    def update_permission(self):
+        """
+        Update the permissions of the downloaded files in order to be
+        executable.
+        """
+
+        for data in self.files:
+            if data not in ['iana', 'dir_structure', 'config', 'requirements']:
+                try:
+                    stats = stat(CURRENT_DIRECTORY + self.files[data])
+                    chmod(
+                        CURRENT_DIRECTORY +
+                        self.files[data],
+                        stats.st_mode | S_IEXEC)
+                except FileNotFoundError:
+                    pass
+
+    def download_files(self):
+        """
+        Download the online version of PyFunceble and tool.
+        """
+
+        if not CONFIGURATION['quiet'] or self.path_update:
+            print('\n Download of the scripts ')
+
+        result = []
+
+        for data in self.files:
+            if 'stable' in CONFIGURATION and CONFIGURATION['stable']:
+                link_to_get = LINKS[data]
+            else:
+                link_to_get = LINKS[data].replace('master', 'dev')
+
+            req = requests.get(link_to_get)
+
+            if req.status_code == 200:
+                Helpers.File(
+                    self.destination +
+                    self.files[data]).write(
+                        req.text,
+                        overwrite=True)
+                result.append(True)
+            else:
+                result.append(False)
+
+        if False not in result:
+            self.update_permission()
+            return
+
+        if not CONFIGURATION['quiet'] or self.path_update:
+            print(
+                CONFIGURATION['done'] +
+                '\nImpossible to update PyFunceble.py. Please report issue.')
+            exit(1)
+
+    @classmethod
+    def hash(cls, file):
+        """
+        Get/return the sha512sum of the current PyFunceble.py.
+
+        Argument:
+            - file: str
+                The file to get the hash.
+        """
+
+        return Helpers.Hash(file, 'sha512', True).get()
+
+    def same_version(self, download=False):
+        """
+        Compare the current version to the online version.
+        """
+
+        if download:
+            self.download_files()
+
+        result = []
+
+        for file in self.files:
+            current_version = self.hash(CURRENT_DIRECTORY + self.files[file])
+            copied_version = self.hash(self.destination + self.files[file])
+
+            if copied_version is not None:
+                if not download and current_version == copied_version:
+                    result.append(True)
+                else:
+                    result.append(False)
+            else:
+                result.append(True)
+
+        if True in result:
+            return True
+        return False
 
 
 class Helpers(object):  # pylint: disable=too-few-public-methods
@@ -2305,23 +2958,98 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
     PyFunceble's helpers.
     """
 
+    class Hash(object):
+        """
+        Get and return the hash a file with the given algorithm.
+
+        Arguments:
+            - file_path: str
+                - The path to the file we have to hash.
+            - algorithm: str
+                The algoritm to use.
+            - only_hash: bool
+                True: Return only the desired algorithm
+
+        Note:
+            Original version : https://git.io/vFQrK
+        """
+
+        def __init__(self, file_path, algorithm='sha512', only_hash=False):
+            self.valid_algorithms = ['all', 'md5',
+                                     'sha1', 'sha224', 'sha384', 'sha512']
+
+            self.path = file_path
+            self.algorithm = algorithm
+            self.only_hash = only_hash
+
+        def hash_data(self, algo):
+            """Get the hash of the given file
+
+            :param algo: A string, the algorithm to use.
+            """
+
+            hash_data = getattr(hashlib, algo)()
+
+            with open(self.path, 'rb') as file:
+                content = file.read()
+
+                hash_data.update(content)
+            return hash_data.hexdigest()
+
+        def get(self):
+            """
+            Return the hash of the given file
+            """
+
+            result = {}
+
+            if path.isfile(
+                    self.path) and self.algorithm in self.valid_algorithms:
+                if self.algorithm == 'all':
+                    del self.valid_algorithms[0]
+                    for algo in self.valid_algorithms:
+                        result[algo] = None
+                        result[algo] = self.hash_data(algo)
+                else:
+                    result[self.algorithm] = None
+                    result[self.algorithm] = self.hash_data(self.algorithm)
+            else:
+                return None
+
+            if self.algorithm != 'all' and self.only_hash:
+                return result[self.algorithm]
+            return result
+
     class Command(object):
-        """Shell command execution."""
+        """
+        Shell command execution.
+        """
 
         def __init__(self, command):
             self.decode_type = 'utf-8'
             self.command = command
 
         def decode_output(self, to_decode):
-            """Decode the output of a shell command in order to be readable.
+            """
+            Decode the output of a shell command in order to be readable.
 
-            :param to_decode: byte(s), Output of a command to decode.
+            Argument:
+                - to_decode: byte
+                    Output of a command to decode.
+
+            Retunes: str
+                The decoded output.
             """
 
             return to_decode.decode(self.decode_type)
 
         def execute(self):
-            """Execute the given command."""
+            """
+            Execute the given command.
+
+            Returns: byte
+                The output in byte format.
+            """
 
             process = Popen(self.command, stdout=PIPE, stderr=PIPE, shell=True)
             (output, error) = process.communicate()
@@ -2346,7 +3074,13 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             """
             Remove a given key from a given dictionary.
 
-            :param key_to_remove: A string or a list, the key(s) to delete.
+            Argument:
+                - key_to_remove: str or list
+                    The key(s) to delete.
+
+            Returns: None or dict
+                - None: no dict passed to the class.
+                - dict: The dict without the removed key(s).
             """
 
             if isinstance(self.main_dictionnary, dict):
@@ -2358,12 +3092,49 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
                 return self.main_dictionnary
             return None
 
+        def rename_key(self, key_to_rename, strict=True):
+            """
+            Rename the given keys from the given dictionary.
+
+            Argument:
+                - key_to_remove: dict
+                    The key(s) to rename.
+                    Format: {old:new}
+                - strict: bool
+                    True: We replace the exact string
+                    False: We replace if the string is like.
+            """
+
+            if isinstance(
+                    self.main_dictionnary,
+                    dict) and isinstance(
+                        key_to_rename,
+                        dict):
+                for old, new in key_to_rename.items():
+                    if strict:
+                        self.main_dictionnary[new] = self.main_dictionnary.pop(
+                            old)
+                    else:
+                        to_rename = {}
+                        for index in self.main_dictionnary:
+                            if old in index:
+                                to_rename.update({
+                                    index: new[:-1] + index.split(old)[-1]
+                                })
+                        self.main_dictionnary = Helpers.Dict(
+                            self.main_dictionnary).rename_key(
+                                to_rename, True)
+                return self.main_dictionnary
+            return None
+
         def to_json(self, destination):
             """
             Save a dictionnary into a JSON file.
 
-            :param destination: A string, A path to a file where we're going to
-            write the converted dict into a JSON format.
+            Argument:
+                - destination: str
+                    A path to a file where we're going to
+                    write the converted dict into a JSON format.
             """
 
             with open(destination, 'w') as file:
@@ -2379,7 +3150,9 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             """
             Convert a JSON formated string into a dictionary.
 
-            :param data: A string, a JSON formeted string to convert to dict format.
+            Argument:
+                - data: str
+                    A JSON formated string to convert to dict format.
             """
 
             try:
@@ -2387,11 +3160,58 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             except decoder.JSONDecodeError:
                 return {}
 
+        @classmethod
+        def from_yaml(cls, data):
+            """
+            Convert a YAML formated string into a dictionary.
+
+            Argument:
+                - data: str
+                    A YAML formated string to convert to dict format.
+            """
+
+            return load_yaml(data)
+
+    class Directory(object):  # pylint: disable=too-few-public-methods
+        """
+        Directory manipulation.
+
+        Argument:
+            - directory:str
+                A path to the directory to manipulate.
+        """
+
+        def __init__(self, directory):
+            self.directory = directory
+
+        def fix_path(self):
+            """
+            This function fix the path of the given path.
+            """
+
+            split_path = []
+            if self.directory:
+                if self.directory.startswith(
+                        '/') or self.directory.startswith('\\'):
+                    if '/' in self.directory:
+                        split_path = self.directory[1:].split('/')
+                    elif '\\' in self.directory:
+                        split_path = self.directory[1:].split('\\')
+
+                    if split_path:
+                        return directory_separator.join(split_path)
+
+                if not self.directory.endswith(directory_separator):
+                    return self.directory + directory_separator
+            return self.directory
+
     class File(object):
         """
         File treatment/manipulations.
 
-        :param file: A string, a path to the file to manipulate.
+        Argument:
+            file: str
+                A path to the file to manipulate.
         """
 
         def __init__(self, file):
@@ -2401,10 +3221,12 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             """
             Write or append data into the given file path.
 
-            :param data_to_write: A string, the data to write.
+            Argument:
+                - data_to_write: str
+                    The data to write.
             """
 
-            if data_to_write is not None and isinstance(
+            if data_to_write and isinstance(
                     data_to_write, str):
                 if overwrite or not path.isfile(self.file):
                     with open(self.file, 'w', encoding="utf-8") as file:
@@ -2416,6 +3238,9 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
         def read(self):
             """
             Read a given file path and return its content.
+
+            Returns: str
+                The content of the given file path.
             """
 
             with open(self.file, 'r', encoding="utf-8") as file:
@@ -2436,6 +3261,10 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
     class List(object):  # pylint: disable=too-few-public-methods
         """
         List manipulation.
+
+        Argument:
+            - main_list: list
+                The list to manipulate.
         """
 
         def __init__(self, main_list=None):
@@ -2447,6 +3276,9 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
         def format(self):
             """
             Return a well formated list. Basicaly, it's sort a list and remove duplicate.
+
+            Returns: list
+                A sorted, without duplicate, list.
             """
 
             try:
@@ -2458,15 +3290,20 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
 
         """A simple implementation ot the python.re package
 
-
-        :param data: A string, the data to regex check
-        :param regex: A string, the regex to match
-        :param return_data: A boolean, if True, return the matched string
-        :param group: A integer, the group to return
-        :param rematch: A boolean, if True, return the matched groups into a
-            formated list. (implementation of Bash ${BASH_REMATCH})
-        :param replace_with: A string, the value to replace the matched regex with.
-        :param occurences: A int, the number of occurence to replace.
+        Arguments:
+            - data: str
+                The data to regex check.
+            - regex: str
+                The regex to match.
+            - group: int
+                The group to return
+            - rematch: bool
+                True: return the matched groups into a formated list.
+                    (implementation of Bash ${BASH_REMATCH})
+            - replace_with: str
+                The value to replace the matched regex with.
+            - occurences: int
+                The number of occurence(s) to replace.
         """
 
         def __init__(self, data, regex, **args):
@@ -2494,8 +3331,36 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             else:
                 self.regex = regex
 
+        def not_matching_list(self):
+            """
+            This method return a list of string which don't match the
+            given regex.
+            """
+
+            pre_result = comp(self.regex)
+
+            return list(
+                filter(
+                    lambda element: not pre_result.search(str(element)),
+                    self.data))
+
+        def matching_list(self):
+            """
+            This method return a list of the string which match the given
+            regex.
+            """
+
+            pre_result = comp(self.regex)
+
+            return list(
+                filter(
+                    lambda element: pre_result.search(str(element)),
+                    self.data))
+
         def match(self):
-            """Used to get exploitable result of re.search"""
+            """
+            Used to get exploitable result of re.search
+            """
 
             # We initate this variable which gonna contain the returned data
             result = []
@@ -2510,7 +3375,7 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             else:
                 pre_result = to_match.search(self.data)
 
-            if self.return_data and pre_result is not None:  # pylint: disable=no-member
+            if self.return_data and pre_result:  # pylint: disable=no-member
                 if self.rematch:  # pylint: disable=no-member
                     for data in pre_result:
                         if isinstance(data, tuple):
@@ -2525,14 +3390,16 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
                         self.group).strip()  # pylint: disable=no-member
 
                 return result
-            elif not self.return_data and pre_result is not None:  # pylint: disable=no-member
+            elif not self.return_data and pre_result:  # pylint: disable=no-member
                 return True
             return False
 
         def replace(self):
-            """Used to replace a matched string with another."""
+            """
+            Used to replace a matched string with another.
+            """
 
-            if self.replace_with is not None:  # pylint: disable=no-member
+            if self.replace_with:  # pylint: disable=no-member
                 return substrings(
                     self.regex,
                     self.replace_with,  # pylint: disable=no-member
@@ -2541,332 +3408,575 @@ class Helpers(object):  # pylint: disable=too-few-public-methods
             return self.data
 
 
+CURRENT_DIRECTORY = directory_separator.join(
+    path.abspath(getsourcefile(lambda: 17))
+    .split(directory_separator)[:-1]) + directory_separator
+
+CONFIGURATION = {}
+CURRENT_TIME = strftime("%a %d %b %H:%m:%S %Z %Y")
+STATUS = {}
+OUTPUTS = {}
+HTTP_CODE = {}
+LINKS = {}
+
+PYFUNCEBLE_LOGO = """
+██████╗ ██╗   ██╗███████╗██╗   ██╗███╗   ██╗ ██████╗███████╗██████╗ ██╗     ███████╗
+██╔══██╗╚██╗ ██╔╝██╔════╝██║   ██║████╗  ██║██╔════╝██╔════╝██╔══██╗██║     ██╔════╝
+██████╔╝ ╚████╔╝ █████╗  ██║   ██║██╔██╗ ██║██║     █████╗  ██████╔╝██║     █████╗
+██╔═══╝   ╚██╔╝  ██╔══╝  ██║   ██║██║╚██╗██║██║     ██╔══╝  ██╔══██╗██║     ██╔══╝
+██║        ██║   ██║     ╚██████╔╝██║ ╚████║╚██████╗███████╗██████╔╝███████╗███████╗
+╚═╝        ╚═╝   ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚══════╝╚═════╝ ╚══════╝╚══════╝
+"""
+
+
+def load_configuration(path_to_config):
+    """
+    This function will load config.yaml and update CONFIGURATION
+
+    Argument:
+        - path_to_config: str
+            The path to the config.yaml to read.
+    """
+
+    if not path_to_config.endswith(directory_separator):
+        path_to_config += directory_separator
+
+    CONFIGURATION.update(Helpers.Dict.from_yaml(
+        Helpers.File(
+            path_to_config +
+            'config.yaml').read()))
+
+    for main_key in ['domains', 'hosts', 'splited']:
+        CONFIGURATION['outputs'][main_key]['directory'] = Helpers.Directory(
+            CONFIGURATION['outputs'][main_key]['directory']).fix_path()
+
+    for main_key in ['http_analytic', 'logs']:
+        for key, value in CONFIGURATION['outputs'][main_key]['directories'].items(
+        ):
+            CONFIGURATION['outputs'][main_key]['directories'][key] = Helpers.Directory(
+                value).fix_path()
+
+    CONFIGURATION['outputs']['main'] = Helpers.Directory(
+        CONFIGURATION['outputs']['main']).fix_path()
+
+    STATUS.update(CONFIGURATION['status'])
+    OUTPUTS.update(CONFIGURATION['outputs'])
+    HTTP_CODE.update(CONFIGURATION['http_codes'])
+    LINKS.update(CONFIGURATION['links'])
+
+    CONFIGURATION.update({
+        'done': Fore.GREEN + '✔',
+        'error': Fore.RED + '✘'
+    })
+
+    return True
+
+
+load_configuration(CURRENT_DIRECTORY)
+
+if OUTPUTS['main']:
+    CURRENT_DIRECTORY = OUTPUTS['main']
+
+    if not CURRENT_DIRECTORY.endswith(directory_separator):
+        CURRENT_DIRECTORY += directory_separator
+
+    if not path.isfile(CURRENT_DIRECTORY + OUTPUTS['default_files']['iana']):
+        Update(path_update=True)
+
+    if path.isfile(CURRENT_DIRECTORY + 'config.yaml'):
+        load_configuration(CURRENT_DIRECTORY)
+
+
+if not path.isdir(CURRENT_DIRECTORY + OUTPUTS['parent_directory']):
+    DirectoryStructure()
+
 if __name__ == '__main__':
     initiate(autoreset=True)
-    if version_info[0] < 3:
-        print('%sPlease run this script with %s' %
-              (Fore.RED, Fore.GREEN + Style.BRIGHT + 'Python 3.x'))
-        exit(1)
-    elif Settings.current_dir == '%%current_dir%%':
-        print(
-            Fore.RED +
-            Style.BRIGHT +
-            'Please run the installation script first.\nYou can run it with: %s' %
-            Fore.CYAN +
-            Style.BRIGHT +
-            getcwd() +
-            Settings.dir_separator +
-            'tool.py -i\n')
-        exit(1)
-    else:
-        PARSER = argparse.ArgumentParser(
-            description='A tool to check domains or IP availability \
-            (ACTIVE, INACTIVE, INVALID). Also described as "[an] excellent \
-            script for checking ACTIVE and INACTIVE domain names"',
-            epilog="Crafted with %s by %s" %
-            (Fore.RED +
-             '♥' +
-             Fore.RESET,
-             Style.BRIGHT + Fore.CYAN +
-             'Nissar Chababy (Funilrys) ' +
-             Style.RESET_ALL +
-             'with the help of ' +
-             Style.BRIGHT + Fore.GREEN +
-             'https://git.io/vND4m ' +
-             Style.RESET_ALL +
-             '&& ' +
-             Style.BRIGHT + Fore.GREEN +
-             'https://git.io/vND4a'),
-            add_help=False)
 
-        CURRENT_VALUE_FORMAT = Fore.YELLOW + \
-            Style.BRIGHT + "Installed value: " + Fore.BLUE
+    PARSER = argparse.ArgumentParser(
+        description='A tool to check domains or IP availability \
+        (ACTIVE, INACTIVE, INVALID). Also described as "[an] excellent \
+        script for checking ACTIVE and INACTIVE domain names"',
+        epilog="Crafted with %s by %s" %
+        (Fore.RED +
+         '♥' +
+         Fore.RESET,
+         Style.BRIGHT + Fore.CYAN +
+         'Nissar Chababy (Funilrys) ' +
+         Style.RESET_ALL +
+         'with the help of ' +
+         Style.BRIGHT + Fore.GREEN +
+         'https://git.io/vND4m ' +
+         Style.RESET_ALL +
+         '&& ' +
+         Style.BRIGHT + Fore.GREEN +
+         'https://git.io/vND4a'),
+        add_help=False)
 
-        PARSER.add_argument(
-            '-ad',
-            '--adblock',
-            action='store_true',
-            help='Switch the decoding of the adblock format. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.adblock) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '-a',
-            '--all',
-            action='store_false',
-            help='Output all available informations on screen. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.less) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '--cmd-before-end',
-            type=str,
-            help='Pass a command before the results (final) commit of travis \
-            mode. %s' % (CURRENT_VALUE_FORMAT + repr(Settings.command_before_end) +
-                         Style.RESET_ALL))
-        PARSER.add_argument(
-            '-c',
-            '--auto-continue',
-            '--continue',
-            action='store_true',
-            help='Switch the value of the auto continue mode. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.auto_continue) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '-d',
-            '--domain',
-            type=str,
-            help='Analyze the given domain.'
-        )
-        PARSER.add_argument(
-            '-db',
-            '--database',
-            action='store_true',
-            help='Switch the value of the usage of a database to store \
-                inactive domains of the currently tested list. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.inactive_database) + Style.RESET_ALL)
-        )
-        PARSER.add_argument(
-            '--debug',
-            action='store_true',
-            help='Switch the value of the debug mode. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.debug) + Style.RESET_ALL))
-        PARSER.add_argument(
-            "-f",
-            "--file",
-            type=str,
-            help="Test a file with a list of domains."
-        )
-        PARSER.add_argument(
-            '--filter',
-            type=str,
-            help='Domain to filter.'
-        )
-        PARSER.add_argument(
-            '-ex',
-            '--execution',
-            action='store_true',
-            help='Switch the dafault value of the execution time showing. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.show_execution_time) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '--help',
-            action='help',
-            default=argparse.SUPPRESS,
-            help='Show this help message and exit.'
-        )
-        PARSER.add_argument(
-            '-h',
-            '--host',
-            action='store_true',
-            help='Switch the value of the generation of hosts file. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.generate_hosts) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--http',
-            action='store_true',
-            help='Switch the value of the usage of HTTP code. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.http_code_status) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-ip',
-            type=str,
-            help='Change the ip to print in host file. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.custom_ip) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '--less',
-            action='store_true',
-            help='Output less informations on screen. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.switch('less')) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-n',
-            '--no-files',
-            action='store_true',
-            help='Switch the value the production of output files. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.no_files) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '-nl',
-            '--no-logs',
-            action='store_true',
-            help='Switch the value of the production of logs files in case we \
-            encounter some errors. %s' %
-            (CURRENT_VALUE_FORMAT + repr(Settings.logs) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '-nu',
-            '--no-unified',
-            action='store_true',
-            help='Switch the value of the production of result.txt as unified result \
-                under the output directory. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.unified_file) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-nw',
-            '--no-whois',
-            action='store_true',
-            help="Switch the value the usage of whois to test domain's status. %s" %
-            (CURRENT_VALUE_FORMAT + repr(Settings.no_whois) + Style.RESET_ALL))
-        PARSER.add_argument(
-            '-p',
-            '--percentage',
-            action='store_true',
-            help='Switch the value of the percentage output mode. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.show_percentage) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--plain',
-            action='store_true',
-            help='Switch the value of the generation \
-                of the plain list of domain. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.plain_list_domain) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-q',
-            '--quiet',
-            action='store_true',
-            help='Run the script in quiet mode. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.quiet) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--share-logs',
-            action='store_true',
-            help='Activate the sharing of logs to an API which helps manage logs in \
-                order to make PyFunceble a better script. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.share_logs) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-s',
-            '--simple',
-            action='store_true',
-            help='Switch the value of the simple output mode. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.simple) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--split',
-            action='store_true',
-            help='Switch the valur of the split of the generated output files. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.inactive_database) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-t',
-            '--timeout',
-            type=int,
-            default=3,
-            help='Switch the value of the timeout. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.seconds_before_http_timeout) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--travis',
-            action='store_true',
-            help='Activate the travis mode. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.travis) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '--travis-branch',
-            type=str,
-            default='master',
-            help='Switch the branch name where we are going to push. %s' %
-            (CURRENT_VALUE_FORMAT +
-             repr(
-                 Settings.travis_branch) +
-             Style.RESET_ALL))
-        PARSER.add_argument(
-            '-v',
-            '--version',
-            action='version',
-            version='%(prog)s 0.28.0-beta'
-        )
+    CURRENT_VALUE_FORMAT = Fore.YELLOW + \
+        Style.BRIGHT + "Installed value: " + Fore.BLUE
 
-        ARGS = PARSER.parse_args()
+    PARSER.add_argument(
+        '-ad',
+        '--adblock',
+        action='store_true',
+        help='Switch the decoding of the adblock format. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['adblock']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '-a',
+        '--all',
+        action='store_false',
+        help='Output all available informations on screen. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['less']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '--cmd-before-end',
+        type=str,
+        help='Pass a command before the results (final) commit of travis \
+        mode. %s' % (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['command_before_end']) +
+                     Style.RESET_ALL))
+    PARSER.add_argument(
+        '-c',
+        '--auto-continue',
+        '--continue',
+        action='store_true',
+        help='Switch the value of the auto continue mode. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['auto_continue']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--autosave-minutes',
+        type=int,
+        help='Update the minimum of minutes before we start commiting \
+            to upstream under Travis CI. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['travis_autosave_minutes']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--clean',
+        action='store_true',
+        help='Clean all files under output.'
+    )
+    PARSER.add_argument(
+        '--commit-autosave-message',
+        type=str,
+        help='Replace the default autosave commit message. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['travis_autosave_commit']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--commit-results-message',
+        type=str,
+        help='Replace the default results (final) commit message. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['travis_autosave_final_commit']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-d',
+        '--domain',
+        type=str,
+        help='Analyze the given domain.'
+    )
+    PARSER.add_argument(
+        '-db',
+        '--database',
+        action='store_true',
+        help='Switch the value of the usage of a database to store \
+            inactive domains of the currently tested list. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['inactive_database']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-dbr',
+        '--days-between-db-retest',
+        type=int,
+        help='Set the numbers of day(s) between each retest of domains present \
+        into inactive-db.json. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['days_between_db_retest']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--debug',
+        action='store_true',
+        help='Switch the value of the debug mode. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['debug']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '--dev',
+        action='store_false',
+        help='Activate the download of the developement version of PyFunceble.'
+    )
+    PARSER.add_argument(
+        '--directory-structure',
+        action='store_true',
+        help='Generate the directory and files that are needed and which does \
+            not exist in the current directory.'
+    )
+    PARSER.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        help="Test a file with a list of domains."
+    )
+    PARSER.add_argument(
+        '--filter',
+        type=str,
+        help='Domain to filter.'
+    )
+    PARSER.add_argument(
+        '-ex',
+        '--execution',
+        action='store_true',
+        help='Switch the dafault value of the execution time showing. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['show_execution_time']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--help',
+        action='help',
+        default=argparse.SUPPRESS,
+        help='Show this help message and exit.'
+    )
+    PARSER.add_argument(
+        '-h',
+        '--host',
+        action='store_true',
+        help='Switch the value of the generation of hosts file. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['generate_hosts']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--http',
+        action='store_true',
+        help='Switch the value of the usage of HTTP code. %s' %
+        (CURRENT_VALUE_FORMAT + repr(HTTP_CODE['active']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--iana',
+        action='store_true',
+        help="Update `iana-domains-db.json`."
+    )
+    PARSER.add_argument(
+        '-ip',
+        type=str,
+        help='Change the ip to print in host file. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['custom_ip']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--less',
+        action='store_true',
+        help='Output less informations on screen. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             PyFunceble.switch('less')) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-n',
+        '--no-files',
+        action='store_true',
+        help='Switch the value the production of output files. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['no_files']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '-nl',
+        '--no-logs',
+        action='store_true',
+        help='Switch the value of the production of logs files in case we \
+        encounter some errors. %s' %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['logs']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '-nu',
+        '--no-unified',
+        action='store_true',
+        help='Switch the value of the production of result.txt as unified result \
+            under the output directory. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['unified']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-nw',
+        '--no-whois',
+        action='store_true',
+        help="Switch the value the usage of whois to test domain's status. %s" %
+        (CURRENT_VALUE_FORMAT + repr(CONFIGURATION['no_whois']) + Style.RESET_ALL))
+    PARSER.add_argument(
+        '-p',
+        '--percentage',
+        action='store_true',
+        help='Switch the value of the percentage output mode. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['show_percentage']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--plain',
+        action='store_true',
+        help='Switch the value of the generation \
+            of the plain list of domain. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['plain_list_domain']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--production',
+        action='store_true',
+        help="Prepare the repository for production."
+    )
+    PARSER.add_argument(
+        '-q',
+        '--quiet',
+        action='store_true',
+        help='Run the script in quiet mode. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['quiet']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--share-logs',
+        action='store_true',
+        help='Activate the sharing of logs to an API which helps manage logs in \
+            order to make PyFunceble a better script. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['share_logs']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-s',
+        '--simple',
+        action='store_true',
+        help='Switch the value of the simple output mode. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['simple']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--split',
+        action='store_true',
+        help='Switch the valur of the split of the generated output files. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['inactive_database']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--stable',
+        action='store_true',
+        help="Activate the download of the stable version of PyFunceble."
+    )
+    PARSER.add_argument(
+        '-t',
+        '--timeout',
+        type=int,
+        default=3,
+        help='Switch the value of the timeout. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['seconds_before_http_timeout']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--travis',
+        action='store_true',
+        help='Activate the travis mode. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['travis']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '--travis-branch',
+        type=str,
+        default='master',
+        help='Switch the branch name where we are going to push. %s' %
+        (CURRENT_VALUE_FORMAT +
+         repr(
+             CONFIGURATION['travis_branch']) +
+         Style.RESET_ALL))
+    PARSER.add_argument(
+        '-u',
+        '--update',
+        action='store_true',
+        help=" Get the latest version of PyFunceble."
+    )
+    PARSER.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version='%(prog)s 0.59.0-beta'
+    )
 
-        if ARGS.less:
-            Settings.less = ARGS.less
-        else:
-            Settings.less = ARGS.all
+    ARGS = PARSER.parse_args()
 
-        if ARGS.adblock:
-            Settings.adblock = Settings().switch('adblock')
+    if ARGS.less:
+        CONFIGURATION.update({
+            'less': ARGS.less
+        })
 
-        if ARGS.auto_continue:
-            Settings.auto_continue = Settings().switch('auto_continue')
+    if ARGS.adblock:
+        CONFIGURATION.update({
+            'adblock': PyFunceble.switch('adblock')
+        })
 
-        if ARGS.cmd_before_end:
-            Settings.command_before_end = ARGS.cmd_before_end
+    if ARGS.auto_continue:
+        CONFIGURATION.update({
+            'auto_continue': PyFunceble.switch('auto_continue')
+        })
 
-        if ARGS.database:
-            Settings.auto_continue = Settings().switch('inactive_database')
+    if ARGS.autosave_minutes:
+        CONFIGURATION.update({
+            'travis_autosave_minutes': ARGS.autosave_minutes
+        })
 
-        if ARGS.debug:
-            Settings.debug = Settings().switch('debug')
+    if ARGS.clean:
+        PyFunceble.Clean(None)
 
-        if ARGS.execution:
-            Settings.show_execution_time = Settings().switch('show_execution_time')
+    if ARGS.cmd_before_end:
+        CONFIGURATION.update({
+            'command_before_end': ARGS.cmd_before_end
+        })
 
-        if ARGS.filter:
-            Settings.to_filter = ARGS.filter
+    if ARGS.commit_autosave_message:
+        CONFIGURATION.update({
+            'travis_autosave_commit': ARGS.commit_autosave_message
+        })
 
-        if ARGS.host:
-            Settings.generate_hosts = Settings().switch('generate_hosts')
+    if ARGS.commit_results_message:
+        CONFIGURATION.update({
+            'travis_autosave_final_commit': ARGS.commit_results_message
+        })
 
-        if ARGS.http:
-            Settings.http_code_status = Settings().switch('http_code_status')
+    if ARGS.database:
+        CONFIGURATION.update({
+            'inactive_database': PyFunceble.switch('inactive_database')
+        })
 
-        if ARGS.ip:
-            Settings.custom_ip = ARGS.ip
+    if ARGS.days_between_db_retest:
+        CONFIGURATION.update({
+            'days_between_db_retest': ARGS.days_between_db_retest
+        })
 
-        if ARGS.no_files:
-            Settings.no_files = Settings().switch('no_files')
+    if ARGS.debug:
+        CONFIGURATION.update({
+            'debug': PyFunceble.switch('debug')
+        })
 
-        if ARGS.no_logs:
-            Settings.logs = Settings().switch('logs')
+    if ARGS.dev:
+        CONFIGURATION.update({
+            'stable': ARGS.dev
+        })
 
-        if ARGS.no_unified:
-            Settings.unified_file = Settings().switch('unified_file')
+    if ARGS.directory_structure:
+        DirectoryStructure()
 
-        if ARGS.no_whois:
-            Settings.no_whois = Settings().switch('no_whois')
+    if ARGS.execution:
+        CONFIGURATION.update({
+            'show_execution_time': PyFunceble.switch('show_execution_time')
+        })
 
-        if ARGS.percentage:
-            Settings.show_percentage = Settings().switch('show_percentage')
+    if ARGS.filter:
+        CONFIGURATION.update({
+            'to_filter': ARGS.filter
+        })
 
-        if ARGS.plain:
-            Settings.plain_list_domain = Settings().switch('plain_list_domain')
+    if ARGS.host:
+        CONFIGURATION.update({
+            'generate_hosts': PyFunceble.switch('generate_hosts')
+        })
 
-        if ARGS.quiet:
-            Settings.quiet = Settings().switch('quiet')
+    if ARGS.http:
+        CONFIGURATION.update({
+            'http_code_status': PyFunceble.switch('http_code_status')
+        })
 
-        if ARGS.share_logs:
-            Settings.share_logs = Settings().switch('share_logs')
+    if ARGS.iana:
+        IANA()
 
-        if ARGS.simple:
-            Settings.simple = Settings().switch('simple')
-            Settings.quiet = Settings().switch('quiet')
+    if ARGS.ip:
+        CONFIGURATION.update({
+            'custom_ip': ARGS.ip
+        })
 
-        if ARGS.split:
-            Settings.split_files = Settings().switch('split_files')
+    if ARGS.no_files:
+        CONFIGURATION.update({
+            'no_files': PyFunceble.switch('no_files')
+        })
 
-        if ARGS.timeout:
-            if ARGS.timeout % 3 == 0:
-                Settings.seconds_before_http_timeout = ARGS.timeout
+    if ARGS.no_logs:
+        CONFIGURATION.update({
+            'logs': PyFunceble.switch('logs')
+        })
 
-        if ARGS.travis:
-            Settings.travis = Settings().switch('travis')
+    if ARGS.no_unified:
+        CONFIGURATION.update({
+            'unified': PyFunceble.switch('unified')
+        })
 
-        if ARGS.travis_branch:
-            Settings.travis_branch = ARGS.travis_branch
+    if ARGS.no_whois:
+        CONFIGURATION.update({
+            'no_whois': PyFunceble.switch('no_whois')
+        })
 
-        PyFunceble(ARGS.domain, ARGS.file)
+    if ARGS.percentage:
+        CONFIGURATION.update({
+            'show_percentage': PyFunceble.switch('show_percentage')
+        })
+
+    if ARGS.plain:
+        CONFIGURATION.update({
+            'plain_list_domain': PyFunceble.switch('plain_list_domain')
+        })
+
+    if ARGS.production:
+        DirectoryStructure(production=True)
+
+    if ARGS.quiet:
+        CONFIGURATION.update({
+            'quiet': PyFunceble.switch('quiet')
+        })
+
+    if ARGS.share_logs:
+        CONFIGURATION.update({
+            'share_logs': PyFunceble.switch('share_logs')
+        })
+
+    if ARGS.simple:
+        CONFIGURATION.update({
+            'simple': PyFunceble.switch('simple'),
+            'quiet': PyFunceble.switch('quiet')
+        })
+
+    if ARGS.split:
+        CONFIGURATION.update({
+            'split': PyFunceble.switch('split')
+        })
+
+    if ARGS.stable:
+        CONFIGURATION.update({
+            'stable': ARGS.stable
+        })
+
+    if ARGS.timeout:
+        if ARGS.timeout % 3 == 0:
+            CONFIGURATION.update({
+                'seconds_before_http_timeout': ARGS.timeout
+            })
+
+    if ARGS.travis:
+        CONFIGURATION.update({
+            'travis': PyFunceble.switch('travis')
+        })
+
+    if ARGS.travis_branch:
+        CONFIGURATION.update({
+            'travis_branch': ARGS.travis_branch
+        })
+
+    if ARGS.update:
+        Update()
+
+    if not CONFIGURATION['quiet']:
+        print(Fore.YELLOW + PYFUNCEBLE_LOGO)
+    PyFunceble(ARGS.domain, ARGS.file)
