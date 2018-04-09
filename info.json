@@ -3,6 +3,8 @@
         "--commit-autosave-message \"[Autosave] Test of add.Dead\"",
         "--commit-results-message \"[Results] Test of add.Dead\"",
         "--commit-autosave-message \"[Autosave] Test of add.Dead\"",
+        "--commit-results-message \"[Results] Test of add.Dead\"",
+        "--commit-autosave-message \"[Autosave] Test of add.Dead\"",
         "--commit-results-message \"[Results] Test of add.Dead\""
     ],
     "clean_list_file": "clean.list",
@@ -10,7 +12,7 @@
     "commit_autosave_message": "Test of add.Dead",
     "currently_under_test": "0",
     "days_until_next_test": "1",
-    "last_test": "1523135642",
+    "last_test": "1523308520",
     "list_name": "add.Dead.list",
     "name": "add.Dead",
     "raw_link": "https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Dead/hosts",
