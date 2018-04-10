@@ -1,6 +1,7 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1523308523": [
+        "1523394923": [
+            "adobe-acrobat-reader-upgrade.com",
             "adobe-update.org",
             "adobe-updates.org",
             "at1antis.com",
@@ -60,6 +61,7 @@
             "www.googleapps-jobs.com",
             "www.googleapps-spain.com",
             "www.googlechrome2013.com",
+            "www.gooqleapi.com",
             "www.housecallsantivirus.com",
             "www.keno-chance-game.com",
             "www.linkrdin.ru",
@@ -89,8 +91,6 @@
             "www.winmediaplayerplus.com",
             "www.wwwfacebook.com"
         ],
-        "to_test": [
-            "adobe-acrobat-reader-upgrade.com"
-        ]
+        "to_test": []
     }
 }
