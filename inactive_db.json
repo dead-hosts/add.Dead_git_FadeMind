@@ -1,6 +1,8 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1523740640": [
+        "1523827061": [
+            "adobe-update.org",
+            "adobe-updates.org",
             "at1antis.com",
             "avast-clean.com",
             "carrer-trade.com",
@@ -89,8 +91,6 @@
             "www.wwwfacebook.com"
         ],
         "to_test": [
-            "adobe-update.org",
-            "adobe-updates.org",
             "adobe-acrobat-reader-upgrade.com"
         ]
     }
