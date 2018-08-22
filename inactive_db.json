@@ -1,8 +1,10 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "0": [
+        "1534976457": [
             "www.analytic-google.com"
         ],
-        "to_test": []
+        "to_test": [
+            "analytic-google.com"
+        ]
     }
 }
