@@ -1,5 +1,9 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
+        "1540681105": [
+            "sunonsunday.co.uk",
+            "thesunonsunday.co.uk"
+        ],
         "to_test": []
     }
 }
