@@ -1,15 +1,8 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1550447854": [
-            "microsoft-update.name",
-            "toolbar.wibiya.com",
+        "1550620821": [
             "www.avast-downloads.com",
-            "www.europcareer.com",
-            "www.get-avast.com",
-            "www.google-docs.info",
-            "www.iphonegames3g.com",
-            "www.jmp2click.com",
-            "www.microsoft-update.name"
+            "www.google-docs.info"
         ],
         "to_test": []
     }
