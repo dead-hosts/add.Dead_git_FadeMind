@@ -13,7 +13,7 @@
         "europcareer.com": {
             "epoch": "1554076800",
             "expiration_date": "01-apr-2019",
-            "state": "future"
+            "state": "past"
         },
         "get-avast.com": {
             "epoch": "1573171200",
