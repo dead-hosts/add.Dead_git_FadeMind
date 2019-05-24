@@ -1,10 +1,8 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1558399261": [
+        "1558658514": [
             "www.google-docs.info"
         ],
-        "to_test": [
-            "www.google-docs.info"
-        ]
+        "to_test": []
     }
 }
