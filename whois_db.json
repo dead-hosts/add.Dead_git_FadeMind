@@ -30,9 +30,9 @@
         "state": "future"
     },
     "iphonegames3g.com": {
-        "epoch": "1565308800",
+        "epoch": 1565308800,
         "expiration_date": "09-aug-2019",
-        "state": "future"
+        "state": "past"
     },
     "jmp2click.com": {
         "epoch": 1589932800,
