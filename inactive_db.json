@@ -39,13 +39,11 @@
         }
     },
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/domains.list": {
-        "1573092814": {
+        "1573265555": {
             "google-docs.info": "INACTIVE"
         },
-        "1573092829": {
-            "www.google-docs.info": "INACTIVE"
-        },
-        "1573092830": {
+        "1573265567": {
+            "www.google-docs.info": "INACTIVE",
             "www.iphonegames3g.com": "INACTIVE"
         }
     }
