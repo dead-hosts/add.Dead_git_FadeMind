@@ -2,7 +2,7 @@
     "avast-downloads.com": {
         "epoch": 1584057600.0,
         "expiration_date": "13-mar-2020",
-        "state": "future"
+        "state": "past"
     },
     "blacksnake.com": {
         "epoch": 1592179200.0,
