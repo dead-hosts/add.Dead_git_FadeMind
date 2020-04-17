@@ -39,10 +39,8 @@
         }
     },
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/domains.list": {
-        "1587012238": {
-            "google-docs.info": "INACTIVE"
-        },
-        "1587012239": {
+        "1587121686": {
+            "google-docs.info": "INACTIVE",
             "www.get-avast.com": "INACTIVE",
             "www.google-docs.info": "INACTIVE"
         }
