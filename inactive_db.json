@@ -1,48 +1,41 @@
 {
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/add.Dead.list": {
-        "1560732811": {},
-        "1560819168": {},
-        "1560905681": {},
-        "1560992255": {},
-        "1561165215": {},
-        "1561338749": {},
-        "1561510744": {},
-        "1561684018": {},
-        "1561857129": {},
-        "1562030393": {},
-        "1562202987": {},
-        "1562375200": {},
-        "1562548897": {},
-        "1562721429": {},
-        "1562894014": {},
-        "1563067124": {},
-        "1563239959": {},
-        "1563412713": {},
-        "1563585135": {},
-        "1563757935": {},
-        "1563930812": {},
-        "1564017250": {},
-        "1564103678": {},
-        "1564190146": {},
-        "1564276601": {},
-        "1564363018": {},
-        "1564535837": {},
-        "1564708739": {},
-        "1564795168": {},
-        "1564881599": {},
-        "1564968040": {},
-        "1565400174": {},
-        "1565486617": {},
-        "1565573068": {
-            "www.google-docs.info": "INACTIVE",
-            "www.jmp2click.com": "INACTIVE"
+        "www.google-docs.info": {
+            "included_at_epoch": 1565573068.0,
+            "included_at_iso": "2019-08-12T01:24:28",
+            "last_retested_at_epoch": 1565573068.0,
+            "last_retested_at_iso": "2019-08-12T01:24:28",
+            "status": "INACTIVE"
+        },
+        "www.jmp2click.com": {
+            "included_at_epoch": 1565573068.0,
+            "included_at_iso": "2019-08-12T01:24:28",
+            "last_retested_at_epoch": 1565573068.0,
+            "last_retested_at_iso": "2019-08-12T01:24:28",
+            "status": "INACTIVE"
         }
     },
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/domains.list": {
-        "1587208249": {
-            "google-docs.info": "INACTIVE",
-            "www.get-avast.com": "INACTIVE",
-            "www.google-docs.info": "INACTIVE"
+        "google-docs.info": {
+            "included_at_epoch": 1587208249.0,
+            "included_at_iso": "2020-04-18T11:10:49",
+            "last_retested_at_epoch": 1587940115.681196,
+            "last_retested_at_iso": "2020-04-26T22:28:35.681196",
+            "status": "INACTIVE"
+        },
+        "www.avast-downloads.com": {
+            "included_at_epoch": 1587940115.688793,
+            "included_at_iso": "2020-04-26T22:28:35.688793",
+            "last_retested_at_epoch": 1587940115.688793,
+            "last_retested_at_iso": "2020-04-26T22:28:35.688793",
+            "status": "INACTIVE"
+        },
+        "www.google-docs.info": {
+            "included_at_epoch": 1587208249.0,
+            "included_at_iso": "2020-04-18T11:10:49",
+            "last_retested_at_epoch": 1587940115.693992,
+            "last_retested_at_iso": "2020-04-26T22:28:35.693992",
+            "status": "INACTIVE"
         }
     }
 }
