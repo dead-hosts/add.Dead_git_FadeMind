@@ -19,22 +19,22 @@
         "google-docs.info": {
             "included_at_epoch": 1587208249.0,
             "included_at_iso": "2020-04-18T11:10:49",
-            "last_retested_at_epoch": 1588823135.681042,
-            "last_retested_at_iso": "2020-05-07T03:45:35.681042",
+            "last_retested_at_epoch": 1588976342.726819,
+            "last_retested_at_iso": "2020-05-08T22:19:02.726819",
             "status": "INACTIVE"
         },
         "www.avast-downloads.com": {
             "included_at_epoch": 1587940115.688793,
             "included_at_iso": "2020-04-26T22:28:35.688793",
-            "last_retested_at_epoch": 1588823135.688258,
-            "last_retested_at_iso": "2020-05-07T03:45:35.688258",
+            "last_retested_at_epoch": 1588976342.734424,
+            "last_retested_at_iso": "2020-05-08T22:19:02.734424",
             "status": "INACTIVE"
         },
         "www.google-docs.info": {
             "included_at_epoch": 1587208249.0,
             "included_at_iso": "2020-04-18T11:10:49",
-            "last_retested_at_epoch": 1588823135.692575,
-            "last_retested_at_iso": "2020-05-07T03:45:35.692575",
+            "last_retested_at_epoch": 1588976342.738944,
+            "last_retested_at_iso": "2020-05-08T22:19:02.738944",
             "status": "INACTIVE"
         }
     }
