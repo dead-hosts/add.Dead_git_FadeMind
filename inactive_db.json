@@ -17,24 +17,24 @@
     },
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/domains.list": {
         "google-docs.info": {
-            "included_at_epoch": 1587208249.0,
-            "included_at_iso": "2020-04-18T11:10:49",
-            "last_retested_at_epoch": 1589514720.701582,
-            "last_retested_at_iso": "2020-05-15T03:52:00.701582",
+            "included_at_epoch": 1589687449.286088,
+            "included_at_iso": "2020-05-17T03:50:49.286088",
+            "last_retested_at_epoch": 1589687449.286088,
+            "last_retested_at_iso": "2020-05-17T03:50:49.286088",
             "status": "INACTIVE"
         },
         "www.avast-downloads.com": {
             "included_at_epoch": 1587940115.688793,
             "included_at_iso": "2020-04-26T22:28:35.688793",
-            "last_retested_at_epoch": 1589514720.708878,
-            "last_retested_at_iso": "2020-05-15T03:52:00.708878",
+            "last_retested_at_epoch": 1589687449.293506,
+            "last_retested_at_iso": "2020-05-17T03:50:49.293506",
             "status": "INACTIVE"
         },
         "www.google-docs.info": {
-            "included_at_epoch": 1587208249.0,
-            "included_at_iso": "2020-04-18T11:10:49",
-            "last_retested_at_epoch": 1589514720.713531,
-            "last_retested_at_iso": "2020-05-15T03:52:00.713531",
+            "included_at_epoch": 1589687449.298199,
+            "included_at_iso": "2020-05-17T03:50:49.298199",
+            "last_retested_at_epoch": 1589687449.298199,
+            "last_retested_at_iso": "2020-05-17T03:50:49.298199",
             "status": "INACTIVE"
         }
     }
