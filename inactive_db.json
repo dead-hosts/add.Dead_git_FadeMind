@@ -17,17 +17,17 @@
     },
     "/home/travis/build/dead-hosts/add.Dead_git_FadeMind/domains.list": {
         "google-docs.info": {
-            "included_at_epoch": 1589687449.286088,
-            "included_at_iso": "2020-05-17T03:50:49.286088",
-            "last_retested_at_epoch": 1591957291.15579,
-            "last_retested_at_iso": "2020-06-12T10:21:31.155790",
+            "included_at_epoch": 1592107502.064342,
+            "included_at_iso": "2020-06-14T04:05:02.064342",
+            "last_retested_at_epoch": 1592107502.064342,
+            "last_retested_at_iso": "2020-06-14T04:05:02.064342",
             "status": "INACTIVE"
         },
         "www.google-docs.info": {
-            "included_at_epoch": 1589687449.298199,
-            "included_at_iso": "2020-05-17T03:50:49.298199",
-            "last_retested_at_epoch": 1591957291.168615,
-            "last_retested_at_iso": "2020-06-12T10:21:31.168615",
+            "included_at_epoch": 1592107502.075673,
+            "included_at_iso": "2020-06-14T04:05:02.075673",
+            "last_retested_at_epoch": 1592107502.075673,
+            "last_retested_at_iso": "2020-06-14T04:05:02.075673",
             "status": "INACTIVE"
         }
     }
