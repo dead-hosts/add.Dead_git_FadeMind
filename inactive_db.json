@@ -19,15 +19,15 @@
         "google-docs.info": {
             "included_at_epoch": 1592107502.064342,
             "included_at_iso": "2020-06-14T04:05:02.064342",
-            "last_retested_at_epoch": 1592107502.064342,
-            "last_retested_at_iso": "2020-06-14T04:05:02.064342",
+            "last_retested_at_epoch": 1592280378.83887,
+            "last_retested_at_iso": "2020-06-16T04:06:18.838870",
             "status": "INACTIVE"
         },
         "www.google-docs.info": {
             "included_at_epoch": 1592107502.075673,
             "included_at_iso": "2020-06-14T04:05:02.075673",
-            "last_retested_at_epoch": 1592107502.075673,
-            "last_retested_at_iso": "2020-06-14T04:05:02.075673",
+            "last_retested_at_epoch": 1592280378.851402,
+            "last_retested_at_iso": "2020-06-16T04:06:18.851402",
             "status": "INACTIVE"
         }
     }
