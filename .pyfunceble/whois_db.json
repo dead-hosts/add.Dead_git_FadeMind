@@ -30,14 +30,14 @@
         "state": "future"
     },
     "iphonegames3g.com": {
-        "epoch": 1596931200.0,
-        "expiration_date": "09-aug-2020",
+        "epoch": 1606521600.0,
+        "expiration_date": "28-nov-2020",
         "state": "future"
     },
     "jmp2click.com": {
-        "epoch": 1596758400.0,
-        "expiration_date": "07-aug-2020",
-        "state": "past"
+        "epoch": 1628294400.0,
+        "expiration_date": "07-aug-2021",
+        "state": "future"
     },
     "paypai.org": {
         "epoch": 1600992000.0,
