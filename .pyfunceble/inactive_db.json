@@ -19,22 +19,22 @@
         "google-docs.info": {
             "included_at_epoch": 1597034155.281595,
             "included_at_iso": "2020-08-10T04:35:55.281595",
-            "last_retested_at_epoch": 1598244734.663457,
-            "last_retested_at_iso": "2020-08-24T04:52:14.663457",
+            "last_retested_at_epoch": 1598417438.057177,
+            "last_retested_at_iso": "2020-08-26T04:50:38.057177",
             "status": "INACTIVE"
         },
         "www.google-docs.info": {
             "included_at_epoch": 1597034155.293976,
             "included_at_iso": "2020-08-10T04:35:55.293976",
-            "last_retested_at_epoch": 1598244734.677142,
-            "last_retested_at_iso": "2020-08-24T04:52:14.677142",
+            "last_retested_at_epoch": 1598417438.068744,
+            "last_retested_at_iso": "2020-08-26T04:50:38.068744",
             "status": "INACTIVE"
         },
         "www.jmp2click.com": {
             "included_at_epoch": 1596861318.441859,
             "included_at_iso": "2020-08-08T04:35:18.441859",
-            "last_retested_at_epoch": 1598244734.680752,
-            "last_retested_at_iso": "2020-08-24T04:52:14.680752",
+            "last_retested_at_epoch": 1598417438.071346,
+            "last_retested_at_iso": "2020-08-26T04:50:38.071346",
             "status": "INACTIVE"
         }
     }
