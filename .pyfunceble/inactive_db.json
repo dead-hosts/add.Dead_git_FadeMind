@@ -31,10 +31,10 @@
             "status": "INACTIVE"
         },
         "www.jmp2click.com": {
-            "included_at_epoch": 1596861318.441859,
-            "included_at_iso": "2020-08-08T04:35:18.441859",
-            "last_retested_at_epoch": 1598590362.213654,
-            "last_retested_at_iso": "2020-08-28T04:52:42.213654",
+            "included_at_epoch": 1599281428.513999,
+            "included_at_iso": "2020-09-05T04:50:28.513999",
+            "last_retested_at_epoch": 1599281428.513999,
+            "last_retested_at_iso": "2020-09-05T04:50:28.513999",
             "status": "INACTIVE"
         }
     }
