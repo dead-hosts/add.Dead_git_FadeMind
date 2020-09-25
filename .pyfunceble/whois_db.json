@@ -42,12 +42,14 @@
     "paypai.org": {
         "epoch": 1600992000.0,
         "expiration_date": "25-sep-2020",
-        "state": "future"
+        "server": "whois.pir.org",
+        "state": "past"
     },
     "sunonsunday.com": {
         "epoch": 1600905600.0,
         "expiration_date": "24-sep-2020",
-        "state": "future"
+        "server": "whois.verisign-grs.com",
+        "state": "past"
     },
     "thesunonsunday.com": {
         "epoch": 1656979200.0,
