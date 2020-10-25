@@ -19,141 +19,141 @@
         "avast-downloads.com": {
             "included_at_epoch": 1603430816.083136,
             "included_at_iso": "2020-10-23T05:26:56.083136",
-            "last_retested_at_epoch": 1603430816.083136,
-            "last_retested_at_iso": "2020-10-23T05:26:56.083136",
+            "last_retested_at_epoch": 1603602883.30235,
+            "last_retested_at_iso": "2020-10-25T05:14:43.302350",
             "status": "ACTIVE"
         },
         "blacksnake.com": {
             "included_at_epoch": 1603430816.085112,
             "included_at_iso": "2020-10-23T05:26:56.085112",
-            "last_retested_at_epoch": 1603430816.085112,
-            "last_retested_at_iso": "2020-10-23T05:26:56.085112",
+            "last_retested_at_epoch": 1603602883.304519,
+            "last_retested_at_iso": "2020-10-25T05:14:43.304519",
             "status": "ACTIVE"
         },
         "europcareer.com": {
             "included_at_epoch": 1603430816.086894,
             "included_at_iso": "2020-10-23T05:26:56.086894",
-            "last_retested_at_epoch": 1603430816.086894,
-            "last_retested_at_iso": "2020-10-23T05:26:56.086894",
+            "last_retested_at_epoch": 1603602883.30702,
+            "last_retested_at_iso": "2020-10-25T05:14:43.307020",
             "status": "ACTIVE"
         },
         "get-avast.com": {
             "included_at_epoch": 1603430816.088181,
             "included_at_iso": "2020-10-23T05:26:56.088181",
-            "last_retested_at_epoch": 1603430816.088181,
-            "last_retested_at_iso": "2020-10-23T05:26:56.088181",
+            "last_retested_at_epoch": 1603602883.305865,
+            "last_retested_at_iso": "2020-10-25T05:14:43.305865",
             "status": "ACTIVE"
         },
         "google-docs.info": {
             "included_at_epoch": 1601874293.848539,
             "included_at_iso": "2020-10-05T05:04:53.848539",
-            "last_retested_at_epoch": 1603257125.92745,
-            "last_retested_at_iso": "2020-10-21T05:12:05.927450",
+            "last_retested_at_epoch": 1603602883.309498,
+            "last_retested_at_iso": "2020-10-25T05:14:43.309498",
             "status": "INACTIVE"
         },
         "gooqleapi.com": {
             "included_at_epoch": 1603430816.089425,
             "included_at_iso": "2020-10-23T05:26:56.089425",
-            "last_retested_at_epoch": 1603430816.089425,
-            "last_retested_at_iso": "2020-10-23T05:26:56.089425",
+            "last_retested_at_epoch": 1603602883.308239,
+            "last_retested_at_iso": "2020-10-25T05:14:43.308239",
             "status": "ACTIVE"
         },
         "iphonegames3g.com": {
             "included_at_epoch": 1603430816.090689,
             "included_at_iso": "2020-10-23T05:26:56.090689",
-            "last_retested_at_epoch": 1603430816.090689,
-            "last_retested_at_iso": "2020-10-23T05:26:56.090689",
+            "last_retested_at_epoch": 1603602883.312603,
+            "last_retested_at_iso": "2020-10-25T05:14:43.312603",
             "status": "ACTIVE"
         },
         "jmp2click.com": {
             "included_at_epoch": 1603430816.091935,
             "included_at_iso": "2020-10-23T05:26:56.091935",
-            "last_retested_at_epoch": 1603430816.091935,
-            "last_retested_at_iso": "2020-10-23T05:26:56.091935",
+            "last_retested_at_epoch": 1603602883.310927,
+            "last_retested_at_iso": "2020-10-25T05:14:43.310927",
             "status": "ACTIVE"
         },
         "microsoft-update.name": {
             "included_at_epoch": 1603430816.093572,
             "included_at_iso": "2020-10-23T05:26:56.093572",
-            "last_retested_at_epoch": 1603430816.093572,
-            "last_retested_at_iso": "2020-10-23T05:26:56.093572",
+            "last_retested_at_epoch": 1603602883.316863,
+            "last_retested_at_iso": "2020-10-25T05:14:43.316863",
             "status": "ACTIVE"
         },
         "paypai.org": {
             "included_at_epoch": 1603430816.094844,
             "included_at_iso": "2020-10-23T05:26:56.094844",
-            "last_retested_at_epoch": 1603430816.094844,
-            "last_retested_at_iso": "2020-10-23T05:26:56.094844",
+            "last_retested_at_epoch": 1603602883.314403,
+            "last_retested_at_iso": "2020-10-25T05:14:43.314403",
             "status": "ACTIVE"
         },
         "sunonsunday.com": {
             "included_at_epoch": 1603430816.097303,
             "included_at_iso": "2020-10-23T05:26:56.097303",
-            "last_retested_at_epoch": 1603430816.097303,
-            "last_retested_at_iso": "2020-10-23T05:26:56.097303",
+            "last_retested_at_epoch": 1603602883.319803,
+            "last_retested_at_iso": "2020-10-25T05:14:43.319803",
             "status": "ACTIVE"
         },
         "thesunonsunday.com": {
             "included_at_epoch": 1603430816.098571,
             "included_at_iso": "2020-10-23T05:26:56.098571",
-            "last_retested_at_epoch": 1603430816.098571,
-            "last_retested_at_iso": "2020-10-23T05:26:56.098571",
+            "last_retested_at_epoch": 1603602883.318551,
+            "last_retested_at_iso": "2020-10-25T05:14:43.318551",
             "status": "ACTIVE"
         },
         "toolbar.wibiya.com": {
             "included_at_epoch": 1603430816.099918,
             "included_at_iso": "2020-10-23T05:26:56.099918",
-            "last_retested_at_epoch": 1603430816.099918,
-            "last_retested_at_iso": "2020-10-23T05:26:56.099918",
+            "last_retested_at_epoch": 1603602883.322174,
+            "last_retested_at_iso": "2020-10-25T05:14:43.322174",
             "status": "ACTIVE"
         },
         "www.avast-downloads.com": {
             "included_at_epoch": 1603430816.101217,
             "included_at_iso": "2020-10-23T05:26:56.101217",
-            "last_retested_at_epoch": 1603430816.101217,
-            "last_retested_at_iso": "2020-10-23T05:26:56.101217",
+            "last_retested_at_epoch": 1603602883.320996,
+            "last_retested_at_iso": "2020-10-25T05:14:43.320996",
             "status": "ACTIVE"
         },
         "www.europcareer.com": {
             "included_at_epoch": 1603430816.10271,
             "included_at_iso": "2020-10-23T05:26:56.102710",
-            "last_retested_at_epoch": 1603430816.10271,
-            "last_retested_at_iso": "2020-10-23T05:26:56.102710",
+            "last_retested_at_epoch": 1603602883.323504,
+            "last_retested_at_iso": "2020-10-25T05:14:43.323504",
             "status": "ACTIVE"
         },
         "www.get-avast.com": {
             "included_at_epoch": 1603430816.104122,
             "included_at_iso": "2020-10-23T05:26:56.104122",
-            "last_retested_at_epoch": 1603430816.104122,
-            "last_retested_at_iso": "2020-10-23T05:26:56.104122",
+            "last_retested_at_epoch": 1603602883.324687,
+            "last_retested_at_iso": "2020-10-25T05:14:43.324687",
             "status": "ACTIVE"
         },
         "www.google-docs.info": {
             "included_at_epoch": 1601874293.850898,
             "included_at_iso": "2020-10-05T05:04:53.850898",
-            "last_retested_at_epoch": 1603257125.94627,
-            "last_retested_at_iso": "2020-10-21T05:12:05.946270",
+            "last_retested_at_epoch": 1603602883.327255,
+            "last_retested_at_iso": "2020-10-25T05:14:43.327255",
             "status": "INACTIVE"
         },
         "www.iphonegames3g.com": {
             "included_at_epoch": 1603430816.105673,
             "included_at_iso": "2020-10-23T05:26:56.105673",
-            "last_retested_at_epoch": 1603430816.105673,
-            "last_retested_at_iso": "2020-10-23T05:26:56.105673",
+            "last_retested_at_epoch": 1603602883.326082,
+            "last_retested_at_iso": "2020-10-25T05:14:43.326082",
             "status": "ACTIVE"
         },
         "www.jmp2click.com": {
             "included_at_epoch": 1601701428.742303,
             "included_at_iso": "2020-10-03T05:03:48.742303",
-            "last_retested_at_epoch": 1603257125.947726,
-            "last_retested_at_iso": "2020-10-21T05:12:05.947726",
+            "last_retested_at_epoch": 1603602883.328459,
+            "last_retested_at_iso": "2020-10-25T05:14:43.328459",
             "status": "INACTIVE"
         },
         "www.microsoft-update.name": {
             "included_at_epoch": 1603430816.107095,
             "included_at_iso": "2020-10-23T05:26:56.107095",
-            "last_retested_at_epoch": 1603430816.107095,
-            "last_retested_at_iso": "2020-10-23T05:26:56.107095",
+            "last_retested_at_epoch": 1603602883.329912,
+            "last_retested_at_iso": "2020-10-25T05:14:43.329912",
             "status": "ACTIVE"
         }
     }
