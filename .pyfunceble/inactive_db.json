@@ -45,10 +45,10 @@
             "status": "ACTIVE"
         },
         "google-docs.info": {
-            "included_at_epoch": 1604294291.993324,
-            "included_at_iso": "2020-11-02T05:18:11.993324",
-            "last_retested_at_epoch": 1606370845.393765,
-            "last_retested_at_iso": "2020-11-26T06:07:25.393765",
+            "included_at_epoch": 1606714573.819856,
+            "included_at_iso": "2020-11-30T05:36:13.819856",
+            "last_retested_at_epoch": 1606714573.819856,
+            "last_retested_at_iso": "2020-11-30T05:36:13.819856",
             "status": "INACTIVE"
         },
         "gooqleapi.com": {
@@ -129,10 +129,10 @@
             "status": "ACTIVE"
         },
         "www.google-docs.info": {
-            "included_at_epoch": 1604294291.995618,
-            "included_at_iso": "2020-11-02T05:18:11.995618",
-            "last_retested_at_epoch": 1606370845.411088,
-            "last_retested_at_iso": "2020-11-26T06:07:25.411088",
+            "included_at_epoch": 1606714573.863106,
+            "included_at_iso": "2020-11-30T05:36:13.863106",
+            "last_retested_at_epoch": 1606714573.863106,
+            "last_retested_at_iso": "2020-11-30T05:36:13.863106",
             "status": "INACTIVE"
         },
         "www.iphonegames3g.com": {
