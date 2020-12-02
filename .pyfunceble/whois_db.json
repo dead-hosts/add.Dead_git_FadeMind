@@ -30,8 +30,9 @@
         "state": "future"
     },
     "iphonegames3g.com": {
-        "epoch": 1606521600.0,
-        "expiration_date": "28-nov-2020",
+        "epoch": 1638057600.0,
+        "expiration_date": "28-nov-2021",
+        "server": "whois.verisign-grs.com",
         "state": "future"
     },
     "jmp2click.com": {
