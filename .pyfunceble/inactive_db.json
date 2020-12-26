@@ -143,10 +143,10 @@
             "status": "ACTIVE"
         },
         "www.jmp2click.com": {
-            "included_at_epoch": 1606541531.98379,
-            "included_at_iso": "2020-11-28T05:32:11.983790",
-            "last_retested_at_epoch": 1608788767.933319,
-            "last_retested_at_iso": "2020-12-24T05:46:07.933319",
+            "included_at_epoch": 1608961673.54922,
+            "included_at_iso": "2020-12-26T05:47:53.549220",
+            "last_retested_at_epoch": 1608961673.54922,
+            "last_retested_at_iso": "2020-12-26T05:47:53.549220",
             "status": "INACTIVE"
         },
         "www.microsoft-update.name": {
