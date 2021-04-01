@@ -1,15 +1,13 @@
 {
-    "abs_source": "/home/runner/work/add.Dead_git_FadeMind/add.Dead_git_FadeMind/origin.list",
     "checker_type": "AVAILABILITY",
     "destination": "origin.list",
     "hash": "4d98bab01e04e98c31a1195e26f9059e591bc6576b4ed35509f67e7d",
     "line_number": 21,
     "output_dir": "/home/runner/work/add.Dead_git_FadeMind/add.Dead_git_FadeMind/output/origin.list",
     "previous_hash": "4d98bab01e04e98c31a1195e26f9059e591bc6576b4ed35509f67e7d",
-    "rel_source": "origin.list",
-    "session_id": "8b838f45b2b4f22432bb013d",
-    "source": "/home/runner/work/add.Dead_git_FadeMind/add.Dead_git_FadeMind/origin.list",
-    "subject": "/home/runner/work/add.Dead_git_FadeMind/add.Dead_git_FadeMind/origin.list",
+    "session_id": "37c6987d345dcdd35ae298a1",
+    "source": "origin.list",
+    "subject": "origin.list",
     "subject_type": "domain",
     "type": "file"
 }
