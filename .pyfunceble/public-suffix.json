@@ -359,7 +359,6 @@
         "g.bg",
         "h.bg",
         "i.bg",
-        "j.bg",
         "k.bg",
         "l.bg",
         "m.bg",
@@ -381,6 +380,7 @@
         "com.bh",
         "edu.bh",
         "gov.bh",
+        "j.bg",
         "net.bh",
         "org.bh"
     ],
